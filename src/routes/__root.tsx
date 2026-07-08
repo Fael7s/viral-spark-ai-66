@@ -86,14 +86,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           "Gere hooks, legendas, emojis e hashtags virais para TikTok, Reels e Shorts em segundos. Feito para criadores de conteúdo.",
       },
       { name: "author", content: "ViralCaption" },
-      { property: "og:title", content: "ViralCaption — Legendas virais em segundos" },
+      { property: "og:title", content: "ViralCaption — Legendas e hooks virais em segundos" },
       {
         property: "og:description",
         content:
-          "Descreva seu vídeo e receba hooks, legendas, emojis e hashtags otimizados para viralizar.",
+          "Gere hooks, legendas, emojis e hashtags virais para TikTok, Reels e Shorts em segundos. Feito para criadores de conteúdo.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "ViralCaption — Legendas e hooks virais em segundos" },
+      { name: "twitter:description", content: "Gere hooks, legendas, emojis e hashtags virais para TikTok, Reels e Shorts em segundos. Feito para criadores de conteúdo." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/6f1da86f-d1ed-4c42-9ecd-05d417a189ed/id-preview-3d02ee45--b44f94ba-8298-4ce1-9fda-111bd3baa172.lovable.app-1783548337551.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/6f1da86f-d1ed-4c42-9ecd-05d417a189ed/id-preview-3d02ee45--b44f94ba-8298-4ce1-9fda-111bd3baa172.lovable.app-1783548337551.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
