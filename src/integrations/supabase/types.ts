@@ -14,16 +14,167 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      favorites: {
+        Row: {
+          created_at: string
+          generation_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          generation_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          generation_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "favorites_generation_id_fkey"
+            columns: ["generation_id"]
+            isOneToOne: false
+            referencedRelation: "generations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      generations: {
+        Row: {
+          created_at: string
+          id: string
+          input_topic: string
+          input_transcript: string | null
+          platform: string
+          result_captions: Json
+          result_emojis: Json
+          result_hashtags: Json
+          result_hooks: Json
+          tone: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          input_topic: string
+          input_transcript?: string | null
+          platform: string
+          result_captions?: Json
+          result_emojis?: Json
+          result_hashtags?: Json
+          result_hooks?: Json
+          tone: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          input_topic?: string
+          input_transcript?: string | null
+          platform?: string
+          result_captions?: Json
+          result_emojis?: Json
+          result_hashtags?: Json
+          result_hooks?: Json
+          tone?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          created_at: string
+          current_period_end: string | null
+          plan: Database["public"]["Enums"]["plan_type"]
+          status: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_period_end?: string | null
+          plan?: Database["public"]["Enums"]["plan_type"]
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_period_end?: string | null
+          plan?: Database["public"]["Enums"]["plan_type"]
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      usage_limits: {
+        Row: {
+          daily_count: number
+          reset_date: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          daily_count?: number
+          reset_date?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          daily_count?: number
+          reset_date?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      consume_generation: {
+        Args: { _free_limit: number; _pro_limit: number }
+        Returns: Json
+      }
     }
     Enums: {
-      [_ in never]: never
+      plan_type: "free" | "pro"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +301,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      plan_type: ["free", "pro"],
+    },
   },
 } as const
