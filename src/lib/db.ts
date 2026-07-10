@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { GenerationRecord, GenerationResult, Platform, Tone } from "./types";
+import { FREE_DAILY_LIMIT, PRO_DAILY_LIMIT } from "./types";
 
 // The generated Database types are empty until tables are introspected; cast to a
 // permissive client so the app compiles while RLS enforces per-user access.
@@ -93,7 +94,7 @@ export async function fetchUsage(): Promise<UsageInfo> {
   const today = new Date().toISOString().slice(0, 10);
   const isToday = usage?.reset_date === today;
   const count = isToday ? (usage?.daily_count ?? 0) : 0;
-  const limit = plan === "pro" ? 500 : 5;
+  const limit = plan === "pro" ? PRO_DAILY_LIMIT : FREE_DAILY_LIMIT;
   return { plan, count, limit };
 }
 
