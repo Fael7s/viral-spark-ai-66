@@ -236,8 +236,10 @@ function GeneratePage() {
                   O plano gratuito inclui 5 gerações por dia. Faça upgrade para o Pro e gere sem
                   limites, com prioridade e todos os tons.
                 </p>
-                <Button className="mt-5 gap-2 bg-brand text-primary-foreground hover:opacity-90">
-                  <Crown className="h-4 w-4" /> Fazer upgrade para o Pro
+                <Button asChild className="mt-5 gap-2 bg-brand text-primary-foreground hover:opacity-90">
+                  <Link to="/upgrade">
+                    <Crown className="h-4 w-4" /> Fazer upgrade para o Pro
+                  </Link>
                 </Button>
               </Card>
             ) : mutation.isPending ? (
