@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { generateContent } from "@/lib/generate.functions";
+import { createBillingPortalSession } from "@/lib/billing.functions";
 import { ERROR_MESSAGES } from "@/lib/generate.server";
 import { fetchUsage, toggleFavorite } from "@/lib/db";
 import { useAuth } from "@/hooks/use-auth";
