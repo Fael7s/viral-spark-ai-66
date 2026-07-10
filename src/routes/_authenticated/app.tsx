@@ -101,25 +101,48 @@ function GeneratePage() {
               Descreva seu vídeo e receba hooks, legendas, emojis e hashtags.
             </p>
           </div>
-          {usage ? (
-            <Badge
-              variant="secondary"
-              className="gap-1.5 py-1.5"
-              title="Gerações usadas hoje"
-            >
-              {isPro ? (
-                <>
-                  <Crown className="h-3.5 w-3.5 text-accent" /> Pro
-                </>
-              ) : (
-                <>
-                  <Sparkles className="h-3.5 w-3.5 text-primary" /> {remaining}/{usage.limit} restantes
-                  hoje
-                </>
-              )}
-            </Badge>
-          ) : null}
+          <div className="flex items-center gap-2">
+            {usage ? (
+              <Badge
+                variant="secondary"
+                className="gap-1.5 py-1.5"
+                title="Gerações usadas hoje"
+              >
+                {isPro ? (
+                  <>
+                    <Crown className="h-3.5 w-3.5 text-accent" /> Pro
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-3.5 w-3.5 text-primary" /> {remaining}/{usage.limit}{" "}
+                    restantes hoje
+                  </>
+                )}
+              </Badge>
+            ) : null}
+            {isPro ? (
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled={portalLoading}
+                onClick={handleManageSubscription}
+              >
+                {portalLoading ? "Abrindo..." : "Gerenciar assinatura"}
+              </Button>
+            ) : (
+              <Button
+                asChild
+                size="sm"
+                className="gap-1.5 bg-brand text-primary-foreground hover:opacity-90"
+              >
+                <Link to="/upgrade">
+                  <Crown className="h-3.5 w-3.5" /> Upgrade
+                </Link>
+              </Button>
+            )}
+          </div>
         </div>
+
 
         <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
           {/* Input panel */}
