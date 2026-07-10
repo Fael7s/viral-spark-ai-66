@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { generateContent } from "@/lib/generate.functions";
+import { createBillingPortalSession } from "@/lib/billing.functions";
 import { ERROR_MESSAGES } from "@/lib/generate.server";
 import { fetchUsage, toggleFavorite } from "@/lib/db";
 import { useAuth } from "@/hooks/use-auth";
@@ -26,6 +27,19 @@ function GeneratePage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const generate = useServerFn(generateContent);
+  const billingPortal = useServerFn(createBillingPortalSession);
+  const [portalLoading, setPortalLoading] = useState(false);
+
+  const handleManageSubscription = async () => {
+    setPortalLoading(true);
+    try {
+      const { url } = await billingPortal();
+      window.location.href = url;
+    } catch {
+      toast.error("Não foi possível abrir o portal de assinatura.");
+      setPortalLoading(false);
+    }
+  };
 
   const [platform, setPlatform] = useState<Platform>("tiktok");
   const [tone, setTone] = useState<Tone>("engracado");
@@ -87,25 +101,48 @@ function GeneratePage() {
               Descreva seu vídeo e receba hooks, legendas, emojis e hashtags.
             </p>
           </div>
-          {usage ? (
-            <Badge
-              variant="secondary"
-              className="gap-1.5 py-1.5"
-              title="Gerações usadas hoje"
-            >
-              {isPro ? (
-                <>
-                  <Crown className="h-3.5 w-3.5 text-accent" /> Pro
-                </>
-              ) : (
-                <>
-                  <Sparkles className="h-3.5 w-3.5 text-primary" /> {remaining}/{usage.limit} restantes
-                  hoje
-                </>
-              )}
-            </Badge>
-          ) : null}
+          <div className="flex items-center gap-2">
+            {usage ? (
+              <Badge
+                variant="secondary"
+                className="gap-1.5 py-1.5"
+                title="Gerações usadas hoje"
+              >
+                {isPro ? (
+                  <>
+                    <Crown className="h-3.5 w-3.5 text-accent" /> Pro
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-3.5 w-3.5 text-primary" /> {remaining}/{usage.limit}{" "}
+                    restantes hoje
+                  </>
+                )}
+              </Badge>
+            ) : null}
+            {isPro ? (
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled={portalLoading}
+                onClick={handleManageSubscription}
+              >
+                {portalLoading ? "Abrindo..." : "Gerenciar assinatura"}
+              </Button>
+            ) : (
+              <Button
+                asChild
+                size="sm"
+                className="gap-1.5 bg-brand text-primary-foreground hover:opacity-90"
+              >
+                <Link to="/upgrade">
+                  <Crown className="h-3.5 w-3.5" /> Upgrade
+                </Link>
+              </Button>
+            )}
+          </div>
         </div>
+
 
         <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
           {/* Input panel */}
@@ -199,8 +236,10 @@ function GeneratePage() {
                   O plano gratuito inclui 5 gerações por dia. Faça upgrade para o Pro e gere sem
                   limites, com prioridade e todos os tons.
                 </p>
-                <Button className="mt-5 gap-2 bg-brand text-primary-foreground hover:opacity-90">
-                  <Crown className="h-4 w-4" /> Fazer upgrade para o Pro
+                <Button asChild className="mt-5 gap-2 bg-brand text-primary-foreground hover:opacity-90">
+                  <Link to="/upgrade">
+                    <Crown className="h-4 w-4" /> Fazer upgrade para o Pro
+                  </Link>
                 </Button>
               </Card>
             ) : mutation.isPending ? (
