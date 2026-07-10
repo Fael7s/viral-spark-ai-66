@@ -27,6 +27,19 @@ function GeneratePage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const generate = useServerFn(generateContent);
+  const billingPortal = useServerFn(createBillingPortalSession);
+  const [portalLoading, setPortalLoading] = useState(false);
+
+  const handleManageSubscription = async () => {
+    setPortalLoading(true);
+    try {
+      const { url } = await billingPortal();
+      window.location.href = url;
+    } catch {
+      toast.error("Não foi possível abrir o portal de assinatura.");
+      setPortalLoading(false);
+    }
+  };
 
   const [platform, setPlatform] = useState<Platform>("tiktok");
   const [tone, setTone] = useState<Tone>("engracado");
