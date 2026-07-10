@@ -98,7 +98,7 @@ function Landing() {
               key={f.label}
               className="flex items-center gap-3 rounded-xl border border-border/60 bg-card/40 p-4 text-sm"
             >
-              <f.icon className="h-5 w-5 text-accent" />
+              <f.icon className="h-5 w-5 text-primary" />
               {f.label}
             </div>
           ))}
@@ -119,7 +119,7 @@ function Landing() {
             <ul className="mt-6 space-y-3 text-sm">
               {["5 gerações por dia", "4 tons de conteúdo", "Histórico e favoritos"].map((f) => (
                 <li key={f} className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-accent" /> {f}
+                  <Check className="h-4 w-4 text-primary" /> {f}
                 </li>
               ))}
             </ul>
@@ -166,7 +166,7 @@ function Landing() {
           {[1, 2, 3].map((i) => (
             <Card key={i} className="border-border/70 bg-card/60 p-6">
               {/* TODO: substituir por depoimentos reais */}
-              <div className="mb-3 flex gap-0.5 text-accent">
+              <div className="mb-3 flex gap-0.5 text-primary">
                 {Array.from({ length: 5 }).map((_, k) => (
                   <Star key={k} className="h-4 w-4 fill-current" />
                 ))}

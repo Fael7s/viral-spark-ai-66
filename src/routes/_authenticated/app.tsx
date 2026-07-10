@@ -110,7 +110,7 @@ function GeneratePage() {
               >
                 {isPro ? (
                   <>
-                    <Crown className="h-3.5 w-3.5 text-accent" /> Pro
+                    <Crown className="h-3.5 w-3.5 text-primary" /> Pro
                   </>
                 ) : (
                   <>
@@ -186,7 +186,7 @@ function GeneratePage() {
                       } ${locked ? "cursor-not-allowed opacity-50" : ""}`}
                     >
                       {t.label}
-                      {locked ? <Crown className="h-3 w-3 text-accent" /> : null}
+                      {locked ? <Crown className="h-3 w-3 text-primary" /> : null}
                     </button>
                   );
                 })}
