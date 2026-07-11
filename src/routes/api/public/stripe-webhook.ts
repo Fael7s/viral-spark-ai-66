@@ -10,6 +10,29 @@ function periodEndISO(sub: Stripe.Subscription): string | null {
   return ts ? new Date(ts * 1000).toISOString() : null;
 }
 
+// Returns true only when this Stripe event is newer than the last one we
+// processed for the subscription, protecting against out-of-order delivery.
+async function isNewerEvent(
+  db: { from: (t: string) => any },
+  subscriptionId: string,
+  eventCreatedUnix: number,
+): Promise<boolean> {
+  const { data, error } = await db
+    .from("subscriptions")
+    .select("last_stripe_event_created")
+    .eq("stripe_subscription_id", subscriptionId)
+    .maybeSingle();
+  if (error) {
+    console.error("[stripe-webhook] ordering check failed", error);
+    // Fall back to applying the update rather than silently dropping it.
+    return true;
+  }
+  const last = (data as { last_stripe_event_created?: string | null } | null)
+    ?.last_stripe_event_created;
+  if (!last) return true;
+  return eventCreatedUnix * 1000 > new Date(last).getTime();
+}
+
 export const Route = createFileRoute("/api/public/stripe-webhook")({
   server: {
     handlers: {
