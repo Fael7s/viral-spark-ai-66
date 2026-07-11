@@ -38,8 +38,12 @@ function UpgradePage() {
     try {
       const { url } = await checkout();
       window.location.href = url;
-    } catch {
-      toast.error("Não foi possível iniciar o checkout. Tente novamente.");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "";
+      const key = Object.keys(ERROR_MESSAGES).find((k) => msg.includes(k));
+      toast.error(
+        key ? ERROR_MESSAGES[key] : "Não foi possível iniciar o checkout. Tente novamente em instantes.",
+      );
       setLoading(false);
     }
   };
