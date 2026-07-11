@@ -68,6 +68,7 @@ export const Route = createFileRoute("/api/public/stripe-webhook")({
 
               const subscription = await stripe.subscriptions.retrieve(subscriptionId);
 
+              const eventCreatedISO = new Date(event.created * 1000).toISOString();
               const { error } = await db
                 .from("subscriptions")
                 .upsert(
@@ -78,6 +79,7 @@ export const Route = createFileRoute("/api/public/stripe-webhook")({
                     stripe_customer_id: customerId ?? null,
                     stripe_subscription_id: subscription.id,
                     current_period_end: periodEndISO(subscription),
+                    last_stripe_event_created: eventCreatedISO,
                     updated_at: new Date().toISOString(),
                   },
                   { onConflict: "user_id" },
@@ -88,11 +90,18 @@ export const Route = createFileRoute("/api/public/stripe-webhook")({
 
             case "customer.subscription.updated": {
               const subscription = event.data.object as Stripe.Subscription;
+              if (!(await isNewerEvent(db, subscription.id, event.created))) {
+                console.log(
+                  `[stripe-webhook] Ignoring out-of-order subscription.updated for ${subscription.id}`,
+                );
+                break;
+              }
               const { error } = await db
                 .from("subscriptions")
                 .update({
                   status: subscription.status,
                   current_period_end: periodEndISO(subscription),
+                  last_stripe_event_created: new Date(event.created * 1000).toISOString(),
                   updated_at: new Date().toISOString(),
                 })
                 .eq("stripe_subscription_id", subscription.id);
@@ -102,11 +111,18 @@ export const Route = createFileRoute("/api/public/stripe-webhook")({
 
             case "customer.subscription.deleted": {
               const subscription = event.data.object as Stripe.Subscription;
+              if (!(await isNewerEvent(db, subscription.id, event.created))) {
+                console.log(
+                  `[stripe-webhook] Ignoring out-of-order subscription.deleted for ${subscription.id}`,
+                );
+                break;
+              }
               const { error } = await db
                 .from("subscriptions")
                 .update({
                   plan: "free",
                   status: "canceled",
+                  last_stripe_event_created: new Date(event.created * 1000).toISOString(),
                   updated_at: new Date().toISOString(),
                 })
                 .eq("stripe_subscription_id", subscription.id);
