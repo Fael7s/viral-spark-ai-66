@@ -113,6 +113,7 @@ export type Database = {
         Row: {
           created_at: string
           current_period_end: string | null
+          last_stripe_event_created: string | null
           plan: Database["public"]["Enums"]["plan_type"]
           status: string
           stripe_customer_id: string | null
@@ -123,6 +124,7 @@ export type Database = {
         Insert: {
           created_at?: string
           current_period_end?: string | null
+          last_stripe_event_created?: string | null
           plan?: Database["public"]["Enums"]["plan_type"]
           status?: string
           stripe_customer_id?: string | null
@@ -133,6 +135,7 @@ export type Database = {
         Update: {
           created_at?: string
           current_period_end?: string | null
+          last_stripe_event_created?: string | null
           plan?: Database["public"]["Enums"]["plan_type"]
           status?: string
           stripe_customer_id?: string | null
