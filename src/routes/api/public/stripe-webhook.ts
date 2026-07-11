@@ -10,6 +10,29 @@ function periodEndISO(sub: Stripe.Subscription): string | null {
   return ts ? new Date(ts * 1000).toISOString() : null;
 }
 
+// Returns true only when this Stripe event is newer than the last one we
+// processed for the subscription, protecting against out-of-order delivery.
+async function isNewerEvent(
+  db: { from: (t: string) => any },
+  subscriptionId: string,
+  eventCreatedUnix: number,
+): Promise<boolean> {
+  const { data, error } = await db
+    .from("subscriptions")
+    .select("last_stripe_event_created")
+    .eq("stripe_subscription_id", subscriptionId)
+    .maybeSingle();
+  if (error) {
+    console.error("[stripe-webhook] ordering check failed", error);
+    // Fall back to applying the update rather than silently dropping it.
+    return true;
+  }
+  const last = (data as { last_stripe_event_created?: string | null } | null)
+    ?.last_stripe_event_created;
+  if (!last) return true;
+  return eventCreatedUnix * 1000 > new Date(last).getTime();
+}
+
 export const Route = createFileRoute("/api/public/stripe-webhook")({
   server: {
     handlers: {
@@ -68,6 +91,7 @@ export const Route = createFileRoute("/api/public/stripe-webhook")({
 
               const subscription = await stripe.subscriptions.retrieve(subscriptionId);
 
+              const eventCreatedISO = new Date(event.created * 1000).toISOString();
               const { error } = await db
                 .from("subscriptions")
                 .upsert(
@@ -78,6 +102,7 @@ export const Route = createFileRoute("/api/public/stripe-webhook")({
                     stripe_customer_id: customerId ?? null,
                     stripe_subscription_id: subscription.id,
                     current_period_end: periodEndISO(subscription),
+                    last_stripe_event_created: eventCreatedISO,
                     updated_at: new Date().toISOString(),
                   },
                   { onConflict: "user_id" },
@@ -88,11 +113,18 @@ export const Route = createFileRoute("/api/public/stripe-webhook")({
 
             case "customer.subscription.updated": {
               const subscription = event.data.object as Stripe.Subscription;
+              if (!(await isNewerEvent(db, subscription.id, event.created))) {
+                console.log(
+                  `[stripe-webhook] Ignoring out-of-order subscription.updated for ${subscription.id}`,
+                );
+                break;
+              }
               const { error } = await db
                 .from("subscriptions")
                 .update({
                   status: subscription.status,
                   current_period_end: periodEndISO(subscription),
+                  last_stripe_event_created: new Date(event.created * 1000).toISOString(),
                   updated_at: new Date().toISOString(),
                 })
                 .eq("stripe_subscription_id", subscription.id);
@@ -102,11 +134,18 @@ export const Route = createFileRoute("/api/public/stripe-webhook")({
 
             case "customer.subscription.deleted": {
               const subscription = event.data.object as Stripe.Subscription;
+              if (!(await isNewerEvent(db, subscription.id, event.created))) {
+                console.log(
+                  `[stripe-webhook] Ignoring out-of-order subscription.deleted for ${subscription.id}`,
+                );
+                break;
+              }
               const { error } = await db
                 .from("subscriptions")
                 .update({
                   plan: "free",
                   status: "canceled",
+                  last_stripe_event_created: new Date(event.created * 1000).toISOString(),
                   updated_at: new Date().toISOString(),
                 })
                 .eq("stripe_subscription_id", subscription.id);

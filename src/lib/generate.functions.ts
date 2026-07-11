@@ -17,11 +17,6 @@ export const generateContent = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const supabase = context.supabase as unknown as {
       rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }>;
-      from: (t: string) => {
-        insert: (v: Record<string, unknown>) => {
-          select: (c: string) => { single: () => Promise<{ data: unknown; error: unknown }> };
-        };
-      };
     };
 
     // Atomic daily-limit check + consume (race-safe in Postgres).
@@ -50,7 +45,13 @@ export const generateContent = createServerFn({ method: "POST" })
 
     const result = await callAiGateway(messages);
 
-    const { data: row, error: insertError } = await supabase
+    // The user's authenticated client can no longer INSERT into generations
+    // (RLS is SELECT-only). consume_generation() already validated the caller
+    // via auth.uid(), so the final insert is done with the service role here.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const admin = supabaseAdmin as unknown as { from: (t: string) => any };
+
+    const { data: row, error: insertError } = await admin
       .from("generations")
       .insert({
         user_id: context.userId,

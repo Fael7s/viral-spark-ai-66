@@ -20,7 +20,12 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     const priceId = process.env.STRIPE_PRICE_ID_PRO;
     if (!priceId) {
-      throw new Error("Missing STRIPE_PRICE_ID_PRO environment variable.");
+      console.error("[billing] Missing STRIPE_PRICE_ID_PRO environment variable.");
+      throw new Error("BILLING_CONFIG_ERROR");
+    }
+    if (!process.env.STRIPE_SECRET_KEY) {
+      console.error("[billing] Missing STRIPE_SECRET_KEY environment variable.");
+      throw new Error("BILLING_CONFIG_ERROR");
     }
 
     const { getStripe } = await import("./stripe.server");
@@ -55,6 +60,11 @@ export const createBillingPortalSession = createServerFn({ method: "POST" })
     const supabase = context.supabase as unknown as {
       from: (t: string) => any;
     };
+
+    if (!process.env.STRIPE_SECRET_KEY) {
+      console.error("[billing] Missing STRIPE_SECRET_KEY environment variable.");
+      throw new Error("BILLING_CONFIG_ERROR");
+    }
 
     const { data: sub, error } = await supabase
       .from("subscriptions")

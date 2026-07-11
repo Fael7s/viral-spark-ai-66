@@ -7,6 +7,7 @@ import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { createCheckoutSession } from "@/lib/billing.functions";
+import { ERROR_MESSAGES } from "@/lib/generate.server";
 
 export const Route = createFileRoute("/_authenticated/upgrade")({
   head: () => ({
@@ -38,8 +39,12 @@ function UpgradePage() {
     try {
       const { url } = await checkout();
       window.location.href = url;
-    } catch {
-      toast.error("Não foi possível iniciar o checkout. Tente novamente.");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "";
+      const key = Object.keys(ERROR_MESSAGES).find((k) => msg.includes(k));
+      toast.error(
+        key ? ERROR_MESSAGES[key] : "Não foi possível iniciar o checkout. Tente novamente em instantes.",
+      );
       setLoading(false);
     }
   };

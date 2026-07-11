@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { z } from "zod";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,6 +15,13 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
+const passwordSchema = z
+  .string()
+  .min(8, "A senha deve ter pelo menos 8 caracteres.")
+  .regex(/[A-Z]/, "A senha deve conter pelo menos 1 letra maiúscula.")
+  .regex(/[0-9]/, "A senha deve conter pelo menos 1 número.")
+  .regex(/[^A-Za-z0-9]/, "A senha deve conter pelo menos 1 caractere especial.");
+
 function AuthPage() {
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
@@ -28,19 +36,27 @@ function AuthPage() {
 
   const handleEmail = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password.length < 6) {
-      toast.error("A senha deve ter pelo menos 6 caracteres.");
-      return;
+    if (mode === "signup") {
+      const result = passwordSchema.safeParse(password);
+      if (!result.success) {
+        toast.error(result.error.issues[0].message);
+        return;
+      }
     }
     setLoading(true);
     try {
       if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: { emailRedirectTo: window.location.origin },
         });
         if (error) throw error;
+        // No session means the account is awaiting e-mail confirmation.
+        if (!data.session) {
+          toast.success("Verifique seu e-mail para ativar sua conta.");
+          return;
+        }
         toast.success("Conta criada! Você já pode gerar legendas.");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });

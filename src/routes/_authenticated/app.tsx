@@ -35,8 +35,10 @@ function GeneratePage() {
     try {
       const { url } = await billingPortal();
       window.location.href = url;
-    } catch {
-      toast.error("Não foi possível abrir o portal de assinatura.");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "";
+      const key = Object.keys(ERROR_MESSAGES).find((k) => msg.includes(k));
+      toast.error(key ? ERROR_MESSAGES[key] : "Não foi possível abrir o portal de assinatura.");
       setPortalLoading(false);
     }
   };
