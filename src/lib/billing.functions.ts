@@ -61,6 +61,11 @@ export const createBillingPortalSession = createServerFn({ method: "POST" })
       from: (t: string) => any;
     };
 
+    if (!process.env.STRIPE_SECRET_KEY) {
+      console.error("[billing] Missing STRIPE_SECRET_KEY environment variable.");
+      throw new Error("BILLING_CONFIG_ERROR");
+    }
+
     const { data: sub, error } = await supabase
       .from("subscriptions")
       .select("stripe_customer_id")
