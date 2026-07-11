@@ -7,6 +7,7 @@ import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { createCheckoutSession } from "@/lib/billing.functions";
+import { ERROR_MESSAGES } from "@/lib/generate.server";
 
 export const Route = createFileRoute("/_authenticated/upgrade")({
   head: () => ({
