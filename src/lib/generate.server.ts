@@ -146,4 +146,5 @@ export const ERROR_MESSAGES: Record<string, string> = {
   AI_BAD_OUTPUT: "A IA retornou um formato inesperado. Tente gerar novamente.",
   AI_KEY_MISSING: "Configuração de IA ausente. Contate o suporte.",
   LIMIT_REACHED: "Você atingiu o limite diário de gerações do plano gratuito.",
+  BILLING_CONFIG_ERROR: "Não foi possível iniciar o checkout. Tente novamente em instantes.",
 };
