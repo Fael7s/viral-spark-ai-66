@@ -17,11 +17,6 @@ export const generateContent = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const supabase = context.supabase as unknown as {
       rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }>;
-      from: (t: string) => {
-        insert: (v: Record<string, unknown>) => {
-          select: (c: string) => { single: () => Promise<{ data: unknown; error: unknown }> };
-        };
-      };
     };
 
     // Atomic daily-limit check + consume (race-safe in Postgres).
