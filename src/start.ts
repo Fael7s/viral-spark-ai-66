@@ -6,10 +6,18 @@ import { attachSupabaseAuth } from "@/integrations/supabase/auth-attacher";
 
 // Content-Security-Policy allowing only the origins the app actually needs:
 // Supabase (auth/data/realtime) and Stripe (checkout + billing scripts/iframes).
+const IS_PRODUCTION = process.env.NODE_ENV === "production";
+
+// 'unsafe-eval' is only needed for Vite's HMR in development; production builds
+// must not allow eval(). 'unsafe-inline' stays for now (nonce-based CSP later).
+const SCRIPT_SRC = IS_PRODUCTION
+  ? "script-src 'self' 'unsafe-inline' https://js.stripe.com https://checkout.stripe.com"
+  : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://checkout.stripe.com";
+
 const CONTENT_SECURITY_POLICY = [
   "default-src 'self'",
   // Vite/React and Stripe.js need inline bootstrap; Stripe scripts served from js.stripe.com.
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://checkout.stripe.com",
+  SCRIPT_SRC,
   // Tailwind/inline styles + Google Fonts stylesheet used in __root head.
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' data: https://fonts.gstatic.com",
