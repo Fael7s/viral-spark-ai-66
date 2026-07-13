@@ -24,13 +24,11 @@ const CONTENT_SECURITY_POLICY = [
 ].join("; ");
 
 const securityHeadersMiddleware = createMiddleware().server(async ({ next }) => {
-  setResponseHeaders({
-    "Content-Security-Policy": CONTENT_SECURITY_POLICY,
-    "X-Content-Type-Options": "nosniff",
-    "X-Frame-Options": "DENY",
-    "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
-    "Referrer-Policy": "strict-origin-when-cross-origin",
-  } as Record<string, string>);
+  setResponseHeader("Content-Security-Policy", CONTENT_SECURITY_POLICY);
+  setResponseHeader("X-Content-Type-Options", "nosniff");
+  setResponseHeader("X-Frame-Options", "DENY");
+  setResponseHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+  setResponseHeader("Referrer-Policy", "strict-origin-when-cross-origin");
   return next();
 });
 
