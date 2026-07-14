@@ -74,6 +74,13 @@ function UpgradePage() {
             <span className="text-muted-foreground">assinatura mensal</span>
           </div>
 
+          <div className="mb-6 flex items-baseline gap-1">
+            <span className="text-3xl font-extrabold text-gradient">{PRICE_DISPLAY}</span>
+            <span className="text-sm text-muted-foreground">/mês</span>
+          </div>
+
+
+
           <ul className="space-y-3">
             {BENEFITS.map((b) => (
               <li key={b} className="flex items-start gap-3">
