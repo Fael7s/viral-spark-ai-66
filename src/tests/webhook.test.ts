@@ -26,7 +26,7 @@ describe("Webhook", () => {
         const sid = typeof s.subscription === "string" ? s.subscription : s.subscription?.id;
         const cid = typeof s.customer === "string" ? s.customer : s.customer?.id;
         if (!uid || !sid) break;
-        const sub = await stripe.subscriptions.retrieve(sid);
+        const sub = await stripe.subscriptions.retrieve(sid) as any;
         await db.from("subscriptions").upsert({ user_id: uid, plan: "pro", status: sub.status, stripe_customer_id: cid ?? null, stripe_subscription_id: sub.id, current_period_end: sub.current_period_end ? new Date(sub.current_period_end * 1000).toISOString() : null, last_stripe_event_created: new Date(ev.created * 1000).toISOString(), updated_at: new Date().toISOString() }, { onConflict: "user_id" });
         break;
       }
