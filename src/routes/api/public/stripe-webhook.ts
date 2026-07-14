@@ -169,6 +169,26 @@ export const Route = createFileRoute("/api/public/stripe-webhook")({
               break;
             }
 
+            case "invoice.payment_failed": {
+              const invoice = event.data.object as Stripe.Invoice;
+              const subscriptionId =
+                typeof (invoice as unknown as { subscription?: string | { id?: string } })
+                  .subscription === "string"
+                  ? ((invoice as unknown as { subscription?: string }).subscription as string)
+                  : (invoice as unknown as { subscription?: { id?: string } }).subscription?.id;
+              if (subscriptionId) {
+                const { error } = await db
+                  .from("subscriptions")
+                  .update({
+                    status: "past_due",
+                    updated_at: new Date().toISOString(),
+                  })
+                  .eq("stripe_subscription_id", subscriptionId);
+                if (error) console.error("[stripe-webhook] payment_failed error", error);
+              }
+              break;
+            }
+
             default:
               // Unhandled event types are acknowledged without processing.
               break;
