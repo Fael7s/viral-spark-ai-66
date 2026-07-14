@@ -28,6 +28,19 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
       throw new Error("BILLING_CONFIG_ERROR");
     }
 
+    const supabase = context.supabase as unknown as {
+      from: (t: string) => any;
+    };
+    const { data: existing } = await supabase
+      .from("subscriptions")
+      .select("status")
+      .eq("user_id", context.userId)
+      .maybeSingle();
+    if ((existing as { status?: string } | null)?.status === "active") {
+      throw new Error("ALREADY_PRO");
+    }
+
+
     const { getStripe } = await import("./stripe.server");
     const stripe = getStripe();
     const baseUrl = resolveBaseUrl();
