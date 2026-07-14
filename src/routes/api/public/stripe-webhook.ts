@@ -33,6 +33,17 @@ async function isNewerEvent(
   return eventCreatedUnix * 1000 > new Date(last).getTime();
 }
 
+// Simple in-memory rate limiter: max 20 requests per IP per minute.
+const ipRequests = new Map<string, number[]>();
+function isRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const recent = (ipRequests.get(ip) ?? []).filter((t) => now - t < 60000);
+  if (recent.length >= 20) return true;
+  recent.push(now);
+  ipRequests.set(ip, recent);
+  return false;
+}
+
 export const Route = createFileRoute("/api/public/stripe-webhook")({
   server: {
     handlers: {
