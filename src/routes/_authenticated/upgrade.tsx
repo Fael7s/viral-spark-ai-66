@@ -30,6 +30,9 @@ const BENEFITS = [
   "Histórico e favoritos ilimitados",
 ];
 
+const PRICE_DISPLAY = import.meta.env.VITE_PRICE_DISPLAY ?? "R$ 29,90";
+
+
 function UpgradePage() {
   const checkout = useServerFn(createCheckoutSession);
   const [loading, setLoading] = useState(false);
