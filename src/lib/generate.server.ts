@@ -145,10 +145,11 @@ export async function callAiGateway(
     throw new Error("AI_BAD_OUTPUT");
   }
 
-  // normalize hashtags to include leading '#'
-  validated.data.hashtags = validated.data.hashtags.map((h) =>
-    h.trim().startsWith("#") ? h.trim() : `#${h.trim().replace(/^#*/, "")}`,
-  );
+  // normalize hashtags to include a single leading '#'
+  validated.data.hashtags = validated.data.hashtags.map((h) => {
+    const cleaned = h.trim().replace(/^#+/, "");
+    return cleaned ? `#${cleaned}` : h.trim();
+  });
 
   return validated.data;
 }
