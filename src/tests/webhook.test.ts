@@ -31,7 +31,7 @@ describe("Webhook", () => {
         break;
       }
       case "customer.subscription.updated": {
-        const sub = ev.data.object as Stripe.Subscription;
+        const sub = ev.data.object as any;
         await db.from("subscriptions").update({ status: sub.status, current_period_end: sub.current_period_end ? new Date(sub.current_period_end * 1000).toISOString() : null, last_stripe_event_created: new Date(ev.created * 1000).toISOString(), updated_at: new Date().toISOString() }).eq("stripe_subscription_id", sub.id);
         break;
       }
