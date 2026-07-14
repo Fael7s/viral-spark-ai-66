@@ -33,10 +33,11 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
     };
     const { data: existing } = await supabase
       .from("subscriptions")
-      .select("status")
+      .select("plan, status")
       .eq("user_id", context.userId)
       .maybeSingle();
-    if ((existing as { status?: string } | null)?.status === "active") {
+    const current = existing as { plan?: string; status?: string } | null;
+    if (current?.plan === "pro" && current?.status === "active") {
       throw new Error("ALREADY_PRO");
     }
 
