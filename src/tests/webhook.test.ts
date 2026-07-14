@@ -3,7 +3,7 @@ import type Stripe from "stripe";
 
 const mockStripe = { webhooks: { constructEventAsync: vi.fn() }, subscriptions: { retrieve: vi.fn() } };
 vi.mock("@/lib/stripe.server", () => ({ getStripe: vi.fn(() => mockStripe) }));
-const mockDb = { from: vi.fn(() => mockDb), select: vi.fn(() => mockDb), eq: vi.fn(() => mockDb), maybeSingle: vi.fn(() => Promise.resolve({ data: null, error: null })), upsert: vi.fn(() => Promise.resolve({ error: null })), update: vi.fn(() => mockDb) };
+const mockDb: any = { from: vi.fn(() => mockDb), select: vi.fn(() => mockDb), eq: vi.fn(() => mockDb), maybeSingle: vi.fn(() => Promise.resolve({ data: null, error: null })), upsert: vi.fn(() => Promise.resolve({ error: null })), update: vi.fn(() => mockDb) };
 vi.mock("@/integrations/supabase/client.server", () => ({ supabaseAdmin: mockDb }));
 
 describe("Webhook", () => {
