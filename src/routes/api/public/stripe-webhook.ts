@@ -48,6 +48,11 @@ export const Route = createFileRoute("/api/public/stripe-webhook")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        const ip = request.headers.get("cf-connecting-ip") || "unknown";
+        if (isRateLimited(ip)) {
+          return new Response("Rate limited", { status: 429 });
+        }
+
         const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
         if (!webhookSecret) {
           console.error("[stripe-webhook] Missing STRIPE_WEBHOOK_SECRET");
