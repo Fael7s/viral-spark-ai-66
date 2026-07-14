@@ -33,10 +33,26 @@ async function isNewerEvent(
   return eventCreatedUnix * 1000 > new Date(last).getTime();
 }
 
+// Simple in-memory rate limiter: max 20 requests per IP per minute.
+const ipRequests = new Map<string, number[]>();
+function isRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const recent = (ipRequests.get(ip) ?? []).filter((t) => now - t < 60000);
+  if (recent.length >= 20) return true;
+  recent.push(now);
+  ipRequests.set(ip, recent);
+  return false;
+}
+
 export const Route = createFileRoute("/api/public/stripe-webhook")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        const ip = request.headers.get("cf-connecting-ip") || "unknown";
+        if (isRateLimited(ip)) {
+          return new Response("Rate limited", { status: 429 });
+        }
+
         const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
         if (!webhookSecret) {
           console.error("[stripe-webhook] Missing STRIPE_WEBHOOK_SECRET");
@@ -150,6 +166,26 @@ export const Route = createFileRoute("/api/public/stripe-webhook")({
                 })
                 .eq("stripe_subscription_id", subscription.id);
               if (error) console.error("[stripe-webhook] delete error", error);
+              break;
+            }
+
+            case "invoice.payment_failed": {
+              const invoice = event.data.object as Stripe.Invoice;
+              const subscriptionId =
+                typeof (invoice as unknown as { subscription?: string | { id?: string } })
+                  .subscription === "string"
+                  ? ((invoice as unknown as { subscription?: string }).subscription as string)
+                  : (invoice as unknown as { subscription?: { id?: string } }).subscription?.id;
+              if (subscriptionId) {
+                const { error } = await db
+                  .from("subscriptions")
+                  .update({
+                    status: "past_due",
+                    updated_at: new Date().toISOString(),
+                  })
+                  .eq("stripe_subscription_id", subscriptionId);
+                if (error) console.error("[stripe-webhook] payment_failed error", error);
+              }
               break;
             }
 

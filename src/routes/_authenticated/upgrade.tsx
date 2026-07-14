@@ -30,6 +30,9 @@ const BENEFITS = [
   "Histórico e favoritos ilimitados",
 ];
 
+const PRICE_DISPLAY = import.meta.env.VITE_PRICE_DISPLAY ?? "R$ 29,90";
+
+
 function UpgradePage() {
   const checkout = useServerFn(createCheckoutSession);
   const [loading, setLoading] = useState(false);
@@ -41,6 +44,11 @@ function UpgradePage() {
       window.location.href = url;
     } catch (err) {
       const msg = err instanceof Error ? err.message : "";
+      if (msg.includes("ALREADY_PRO")) {
+        toast.info("Você já é Pro!");
+        setLoading(false);
+        return;
+      }
       const key = Object.keys(ERROR_MESSAGES).find((k) => msg.includes(k));
       toast.error(
         key ? ERROR_MESSAGES[key] : "Não foi possível iniciar o checkout. Tente novamente em instantes.",
@@ -68,6 +76,13 @@ function UpgradePage() {
             <span className="text-4xl font-extrabold">Pro</span>
             <span className="text-muted-foreground">assinatura mensal</span>
           </div>
+
+          <div className="mb-6 flex items-baseline gap-1">
+            <span className="text-3xl font-extrabold text-gradient">{PRICE_DISPLAY}</span>
+            <span className="text-sm text-muted-foreground">/mês</span>
+          </div>
+
+
 
           <ul className="space-y-3">
             {BENEFITS.map((b) => (

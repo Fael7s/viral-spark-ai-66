@@ -87,19 +87,33 @@ export async function callAiGateway(
     },
   };
 
-  const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: "google/gemini-2.5-flash",
-      messages,
-      tools: [tool],
-      tool_choice: { type: "function", function: { name: "entregar_conteudo" } },
-    }),
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+  let res: Response;
+  try {
+    res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      signal: controller.signal,
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages,
+        tools: [tool],
+        tool_choice: { type: "function", function: { name: "entregar_conteudo" } },
+      }),
+    });
+  } catch (err) {
+    if (err instanceof DOMException && err.name === "AbortError") {
+      throw new Error("AI_TIMEOUT");
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 
   if (res.status === 429) throw new Error("AI_RATE_LIMIT");
   if (res.status === 402) throw new Error("AI_CREDITS");
@@ -131,10 +145,11 @@ export async function callAiGateway(
     throw new Error("AI_BAD_OUTPUT");
   }
 
-  // normalize hashtags to include leading '#'
-  validated.data.hashtags = validated.data.hashtags.map((h) =>
-    h.trim().startsWith("#") ? h.trim() : `#${h.trim().replace(/^#*/, "")}`,
-  );
+  // normalize hashtags to include a single leading '#'
+  validated.data.hashtags = validated.data.hashtags.map((h) => {
+    const cleaned = h.trim().replace(/^#+/, "");
+    return cleaned ? `#${cleaned}` : h.trim();
+  });
 
   return validated.data;
 }
@@ -144,6 +159,7 @@ export const ERROR_MESSAGES: Record<string, string> = {
   AI_CREDITS: "O serviço de IA está temporariamente indisponível. Tente mais tarde.",
   AI_ERROR: "Falha ao gerar conteúdo. Tente novamente.",
   AI_BAD_OUTPUT: "A IA retornou um formato inesperado. Tente gerar novamente.",
+  AI_TIMEOUT: "A geração demorou muito. Tente novamente em instantes.",
   AI_KEY_MISSING: "Configuração de IA ausente. Contate o suporte.",
   LIMIT_REACHED: "Você atingiu o limite diário de gerações do plano gratuito.",
   BILLING_CONFIG_ERROR: "Não foi possível iniciar o checkout. Tente novamente em instantes.",
