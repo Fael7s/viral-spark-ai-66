@@ -41,6 +41,11 @@ function UpgradePage() {
       window.location.href = url;
     } catch (err) {
       const msg = err instanceof Error ? err.message : "";
+      if (msg.includes("ALREADY_PRO")) {
+        toast.info("Você já é Pro!");
+        setLoading(false);
+        return;
+      }
       const key = Object.keys(ERROR_MESSAGES).find((k) => msg.includes(k));
       toast.error(
         key ? ERROR_MESSAGES[key] : "Não foi possível iniciar o checkout. Tente novamente em instantes.",
