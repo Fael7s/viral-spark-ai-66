@@ -170,5 +170,6 @@ export const ERROR_MESSAGES: Record<string, string> = {
   AI_TIMEOUT: "A geração demorou muito. Tente novamente em instantes.",
   AI_KEY_MISSING: "Configuração de IA ausente. Contate o suporte.",
   LIMIT_REACHED: "Você atingiu o limite diário de gerações do plano gratuito.",
+  RATE_LIMIT: "Muitas requisições. Aguarde um minuto antes de tentar novamente.",
   BILLING_CONFIG_ERROR: "Não foi possível iniciar o checkout. Tente novamente em instantes.",
 };
