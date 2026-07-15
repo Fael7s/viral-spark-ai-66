@@ -3,12 +3,18 @@ import { getRequestHeader } from "@tanstack/react-start/server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 function resolveBaseUrl(): string {
+  const allowedOrigin = process.env.APP_ORIGIN;
+  if (allowedOrigin) return allowedOrigin;
+
   const origin = getRequestHeader("origin");
-  if (origin) return origin;
-  const host = getRequestHeader("host");
-  const proto = getRequestHeader("x-forwarded-proto") ?? "https";
-  if (host) return `${proto}://${host}`;
-  throw new Error("Unable to resolve request origin");
+  const allowedHosts = process.env.ALLOWED_HOSTS?.split(",").map((h) => h.trim()).filter(Boolean) ?? [];
+  if (origin?.startsWith("https://") || origin?.startsWith("http://localhost")) {
+    if (allowedHosts.length === 0 || allowedHosts.some((h) => origin.includes(h))) {
+      return origin;
+    }
+  }
+  console.error("[billing] Rejected origin", { origin });
+  throw new Error("Invalid origin");
 }
 
 /**
