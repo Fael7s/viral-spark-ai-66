@@ -59,8 +59,8 @@ export function buildMessages(params: {
   const user = [
     "Gere conteúdo para o seguinte vídeo.",
     "<input_usuario>",
-    `TEMA/NICHO: ${topic}`,
-    transcript ? `TRANSCRICAO/ROTEIRO: ${transcript}` : "TRANSCRICAO/ROTEIRO: (não fornecida)",
+    `TEMA/NICHO: ${sanitizeUserInput(topic)}`,
+    transcript ? `TRANSCRICAO/ROTEIRO: ${sanitizeUserInput(transcript)}` : "TRANSCRICAO/ROTEIRO: (não fornecida)",
     "</input_usuario>",
   ].join("\n");
 
