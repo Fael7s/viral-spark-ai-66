@@ -64,14 +64,14 @@ function AuthPage() {
       }
       navigate({ to: "/app", replace: true });
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Erro ao autenticar";
-      toast.error(
-        msg.includes("Invalid login")
-          ? "E-mail ou senha incorretos."
-          : msg.includes("already registered")
-            ? "Este e-mail já está cadastrado."
-            : msg,
-      );
+      const msg = err instanceof Error ? err.message : "";
+      if (msg.includes("Invalid login") || msg.includes("Email not confirmed")) {
+        toast.error("E-mail ou senha incorretos.");
+      } else if (msg.includes("already registered")) {
+        toast.error("Este e-mail já está cadastrado.");
+      } else {
+        toast.error("Erro ao autenticar. Tente novamente.");
+      }
     } finally {
       setLoading(false);
     }
