@@ -38,9 +38,9 @@ function createSupabaseAdminClient() {
       ...(!SUPABASE_URL ? ['SUPABASE_URL'] : []),
       ...(!SUPABASE_SERVICE_ROLE_KEY ? ['SUPABASE_SERVICE_ROLE_KEY'] : []),
     ];
-    const message = `Missing Supabase environment variable(s): ${missing.join(', ')}. Connect Supabase in Lovable Cloud.`;
-    console.error(`[Supabase] ${message}`);
-    throw new Error(message);
+    const technicalMessage = `Missing Supabase environment variable(s): ${missing.join(', ')}.`;
+    console.error(`[Supabase] ${technicalMessage}`);
+    throw new Error('Configuração do servidor incompleta. Contate o suporte.');
   }
 
   return createClient<Database>(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
