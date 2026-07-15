@@ -85,6 +85,21 @@ export type Database = {
         }
         Relationships: []
       }
+      processed_webhooks: {
+        Row: {
+          processed_at: string
+          stripe_event_id: string
+        }
+        Insert: {
+          processed_at?: string
+          stripe_event_id: string
+        }
+        Update: {
+          processed_at?: string
+          stripe_event_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -171,6 +186,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_rate_limit: {
+        Args: {
+          _max_requests?: number
+          _user_id: string
+          _window_seconds?: number
+        }
+        Returns: boolean
+      }
       consume_generation: {
         Args: { _free_limit: number; _pro_limit: number }
         Returns: Json

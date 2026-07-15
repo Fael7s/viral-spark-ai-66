@@ -1,6 +1,14 @@
 import { z } from "zod";
 import type { GenerationResult, Platform, Tone } from "./types";
 
+function sanitizeUserInput(input: string): string {
+  return input
+    .replace(/<\/?(system|input_usuario|user|assistant)>/gi, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .slice(0, 5000);
+}
+
+
 const PLATFORM_RULES: Record<Platform, string> = {
   tiktok:
     "TikTok: tom direto, jovem e com gírias atuais do Brasil. Legendas curtas (até ~150 caracteres). Ganchos rápidos e coloquiais.",
@@ -51,8 +59,8 @@ export function buildMessages(params: {
   const user = [
     "Gere conteúdo para o seguinte vídeo.",
     "<input_usuario>",
-    `TEMA/NICHO: ${topic}`,
-    transcript ? `TRANSCRICAO/ROTEIRO: ${transcript}` : "TRANSCRICAO/ROTEIRO: (não fornecida)",
+    `TEMA/NICHO: ${sanitizeUserInput(topic)}`,
+    transcript ? `TRANSCRICAO/ROTEIRO: ${sanitizeUserInput(transcript)}` : "TRANSCRICAO/ROTEIRO: (não fornecida)",
     "</input_usuario>",
   ].join("\n");
 
@@ -162,5 +170,6 @@ export const ERROR_MESSAGES: Record<string, string> = {
   AI_TIMEOUT: "A geração demorou muito. Tente novamente em instantes.",
   AI_KEY_MISSING: "Configuração de IA ausente. Contate o suporte.",
   LIMIT_REACHED: "Você atingiu o limite diário de gerações do plano gratuito.",
+  RATE_LIMIT: "Muitas requisições. Aguarde um minuto antes de tentar novamente.",
   BILLING_CONFIG_ERROR: "Não foi possível iniciar o checkout. Tente novamente em instantes.",
 };

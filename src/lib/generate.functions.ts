@@ -36,6 +36,24 @@ export const generateContent = createServerFn({ method: "POST" })
       throw err;
     }
 
+    // Per-minute rate limit (30/min for Pro, 5/min for Free) using service role.
+    {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const admin = supabaseAdmin as unknown as {
+        rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }>;
+      };
+      const { data: allowed, error: rateError } = await admin.rpc("check_rate_limit", {
+        _user_id: context.userId,
+        _window_seconds: 60,
+        _max_requests: usage.plan === "pro" ? 30 : 5,
+      });
+      if (rateError) {
+        console.error("[generate] check_rate_limit error", rateError);
+      } else if (allowed === false) {
+        throw new Error("RATE_LIMIT");
+      }
+    }
+
     const messages = buildMessages({
       platform: data.platform,
       tone: data.tone,

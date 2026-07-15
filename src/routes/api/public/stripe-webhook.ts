@@ -85,6 +85,16 @@ export const Route = createFileRoute("/api/public/stripe-webhook")({
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const db = supabaseAdmin as unknown as { from: (t: string) => any };
 
+        // Idempotency: ignore events we've already processed.
+        const { data: alreadyProcessed } = await db
+          .from("processed_webhooks")
+          .select("stripe_event_id")
+          .eq("stripe_event_id", event.id)
+          .maybeSingle();
+        if (alreadyProcessed) {
+          return new Response("ok", { status: 200 });
+        }
+
         try {
           switch (event.type) {
             case "checkout.session.completed": {
@@ -197,6 +207,9 @@ export const Route = createFileRoute("/api/public/stripe-webhook")({
           console.error("[stripe-webhook] Handler error", err);
           return new Response("Handler error", { status: 500 });
         }
+
+        // Mark event as processed for idempotency (ignore duplicate insert races).
+        await db.from("processed_webhooks").insert({ stripe_event_id: event.id });
 
         return new Response("ok", { status: 200 });
       },
