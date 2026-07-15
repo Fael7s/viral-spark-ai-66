@@ -208,6 +208,9 @@ export const Route = createFileRoute("/api/public/stripe-webhook")({
           return new Response("Handler error", { status: 500 });
         }
 
+        // Mark event as processed for idempotency (ignore duplicate insert races).
+        await db.from("processed_webhooks").insert({ stripe_event_id: event.id });
+
         return new Response("ok", { status: 200 });
       },
     },
