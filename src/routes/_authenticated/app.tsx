@@ -3,7 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Wand2, Sparkles, Star, Crown, AlertCircle } from "lucide-react";
+import { Wand2, Sparkles, Star, Crown, AlertCircle, Copy, Gift } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { ResultCards, ResultCardsSkeleton } from "@/components/result-cards";
 import { Button } from "@/components/ui/button";
