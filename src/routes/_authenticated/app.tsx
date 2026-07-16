@@ -161,6 +161,28 @@ function GeneratePage() {
           </div>
         </div>
 
+        {referral?.code ? (
+          <Card className="mb-6 flex flex-wrap items-center gap-4 border-border/70 bg-card/80 p-4">
+            <div className="flex items-center gap-2">
+              <div className="grid h-9 w-9 place-items-center rounded-md bg-brand-soft">
+                <Gift className="h-4 w-4 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold">Indique e ganhe +5 gerações/dia</p>
+                <p className="text-xs text-muted-foreground">
+                  {referral.totalReferrals} indicaç{referral.totalReferrals === 1 ? "ão" : "ões"} · +{referral.totalBonus} gerações no total
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-1 items-center gap-2 min-w-[220px]">
+              <Input readOnly value={referralLink} className="font-mono text-xs" />
+              <Button size="sm" variant="secondary" className="gap-1.5" onClick={copyReferralLink}>
+                <Copy className="h-3.5 w-3.5" /> Copiar
+              </Button>
+            </div>
+          </Card>
+        ) : null}
+
 
         <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
           {/* Input panel */}
