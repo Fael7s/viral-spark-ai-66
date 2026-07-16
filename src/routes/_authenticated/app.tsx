@@ -52,6 +52,22 @@ function GeneratePage() {
   const [limitHit, setLimitHit] = useState(false);
 
   const { data: usage } = useQuery({ queryKey: ["usage"], queryFn: fetchUsage });
+  const { data: referral } = useQuery({ queryKey: ["referral"], queryFn: fetchReferralInfo });
+
+  const referralLink = useMemo(() => {
+    if (!referral?.code || typeof window === "undefined") return "";
+    return `${window.location.origin}/auth?ref=${referral.code}`;
+  }, [referral?.code]);
+
+  const copyReferralLink = async () => {
+    if (!referralLink) return;
+    try {
+      await navigator.clipboard.writeText(referralLink);
+      toast.success("Link copiado!");
+    } catch {
+      toast.error("Não foi possível copiar o link.");
+    }
+  };
 
   const mutation = useMutation({
     mutationFn: () => generate({ data: { platform, tone, topic, transcript } }),
