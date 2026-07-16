@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { generateContent } from "@/lib/generate.functions";
 import { createBillingPortalSession } from "@/lib/billing.functions";
 import { ERROR_MESSAGES } from "@/lib/generate.server";
-import { fetchUsage, toggleFavorite } from "@/lib/db";
+import { fetchUsage, fetchReferralInfo, toggleFavorite } from "@/lib/db";
 import { useAuth } from "@/hooks/use-auth";
 import { PLATFORMS, TONES, type GenerationResult, type Platform, type Tone } from "@/lib/types";
 
