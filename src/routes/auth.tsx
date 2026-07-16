@@ -131,6 +131,12 @@ function AuthPage() {
               : "Comece grátis com 5 gerações por dia"}
           </p>
 
+          {referralCode && mode === "signup" ? (
+            <div className="mt-4 rounded-md border border-primary/40 bg-brand-soft px-3 py-2 text-center text-xs text-foreground">
+              Você foi indicado com o código <strong>{referralCode}</strong>. Seu convidador ganha 5 gerações extras hoje.
+            </div>
+          ) : null}
+
           <Button
             variant="secondary"
             className="mt-6 w-full gap-2"
