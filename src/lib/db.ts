@@ -83,19 +83,45 @@ export interface UsageInfo {
   plan: "free" | "pro";
   count: number;
   limit: number;
+  bonus: number;
 }
 
 export async function fetchUsage(): Promise<UsageInfo> {
-  const [{ data: sub }, { data: usage }] = await Promise.all([
+  const today = new Date().toISOString().slice(0, 10);
+  const [{ data: sub }, { data: usage }, { data: bonuses }] = await Promise.all([
     db.from("subscriptions").select("plan").maybeSingle(),
     db.from("usage_limits").select("daily_count, reset_date").maybeSingle(),
+    db.from("referral_bonuses").select("bonus_generations").eq("granted_date", today),
   ]);
   const plan = (sub?.plan ?? "free") as "free" | "pro";
-  const today = new Date().toISOString().slice(0, 10);
   const isToday = usage?.reset_date === today;
   const count = isToday ? (usage?.daily_count ?? 0) : 0;
-  const limit = plan === "pro" ? PRO_DAILY_LIMIT : FREE_DAILY_LIMIT;
-  return { plan, count, limit };
+  const base = plan === "pro" ? PRO_DAILY_LIMIT : FREE_DAILY_LIMIT;
+  const bonus = ((bonuses ?? []) as { bonus_generations: number }[]).reduce(
+    (s, r) => s + (r.bonus_generations ?? 0),
+    0,
+  );
+  return { plan, count, limit: base + bonus, bonus };
+}
+
+export interface ReferralInfo {
+  code: string | null;
+  totalReferrals: number;
+  totalBonus: number;
+}
+
+export async function fetchReferralInfo(): Promise<ReferralInfo> {
+  const [{ data: profile }, { data: bonuses }] = await Promise.all([
+    db.from("profiles").select("referral_code").maybeSingle(),
+    db.from("referral_bonuses").select("bonus_generations"),
+  ]);
+  const rows = (bonuses ?? []) as { bonus_generations: number }[];
+  return {
+    code: (profile?.referral_code as string | null) ?? null,
+    totalReferrals: rows.length,
+    totalBonus: rows.reduce((s, r) => s + (r.bonus_generations ?? 0), 0),
+  };
 }
 
 export type { GenerationResult };
+
