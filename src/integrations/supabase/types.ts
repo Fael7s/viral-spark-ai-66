@@ -106,6 +106,8 @@ export type Database = {
           created_at: string
           display_name: string | null
           id: string
+          referral_code: string
+          referred_by: string | null
           updated_at: string
         }
         Insert: {
@@ -113,6 +115,8 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id: string
+          referral_code: string
+          referred_by?: string | null
           updated_at?: string
         }
         Update: {
@@ -120,7 +124,36 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          referral_code?: string
+          referred_by?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      referral_bonuses: {
+        Row: {
+          bonus_generations: number
+          granted_at: string
+          granted_date: string
+          id: string
+          source_user_id: string
+          user_id: string
+        }
+        Insert: {
+          bonus_generations?: number
+          granted_at?: string
+          granted_date?: string
+          id?: string
+          source_user_id: string
+          user_id: string
+        }
+        Update: {
+          bonus_generations?: number
+          granted_at?: string
+          granted_date?: string
+          id?: string
+          source_user_id?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -198,6 +231,7 @@ export type Database = {
         Args: { _free_limit: number; _pro_limit: number }
         Returns: Json
       }
+      generate_referral_code: { Args: never; Returns: string }
     }
     Enums: {
       plan_type: "free" | "pro"
