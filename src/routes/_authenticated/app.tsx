@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Wand2, Sparkles, Star, Crown, AlertCircle } from "lucide-react";
+import { Wand2, Sparkles, Star, Crown, AlertCircle, Copy, Gift } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { ResultCards, ResultCardsSkeleton } from "@/components/result-cards";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { generateContent } from "@/lib/generate.functions";
 import { createBillingPortalSession } from "@/lib/billing.functions";
 import { ERROR_MESSAGES } from "@/lib/generate.server";
-import { fetchUsage, toggleFavorite } from "@/lib/db";
+import { fetchUsage, fetchReferralInfo, toggleFavorite } from "@/lib/db";
 import { useAuth } from "@/hooks/use-auth";
 import { PLATFORMS, TONES, type GenerationResult, type Platform, type Tone } from "@/lib/types";
 
@@ -52,6 +52,22 @@ function GeneratePage() {
   const [limitHit, setLimitHit] = useState(false);
 
   const { data: usage } = useQuery({ queryKey: ["usage"], queryFn: fetchUsage });
+  const { data: referral } = useQuery({ queryKey: ["referral"], queryFn: fetchReferralInfo });
+
+  const referralLink = useMemo(() => {
+    if (!referral?.code || typeof window === "undefined") return "";
+    return `${window.location.origin}/auth?ref=${referral.code}`;
+  }, [referral?.code]);
+
+  const copyReferralLink = async () => {
+    if (!referralLink) return;
+    try {
+      await navigator.clipboard.writeText(referralLink);
+      toast.success("Link copiado!");
+    } catch {
+      toast.error("Não foi possível copiar o link.");
+    }
+  };
 
   const mutation = useMutation({
     mutationFn: () => generate({ data: { platform, tone, topic, transcript } }),
@@ -144,6 +160,28 @@ function GeneratePage() {
             )}
           </div>
         </div>
+
+        {referral?.code ? (
+          <Card className="mb-6 flex flex-wrap items-center gap-4 border-border/70 bg-card/80 p-4">
+            <div className="flex items-center gap-2">
+              <div className="grid h-9 w-9 place-items-center rounded-md bg-brand-soft">
+                <Gift className="h-4 w-4 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold">Indique e ganhe +5 gerações/dia</p>
+                <p className="text-xs text-muted-foreground">
+                  {referral.totalReferrals} indicaç{referral.totalReferrals === 1 ? "ão" : "ões"} · +{referral.totalBonus} gerações no total
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-1 items-center gap-2 min-w-[220px]">
+              <Input readOnly value={referralLink} className="font-mono text-xs" />
+              <Button size="sm" variant="secondary" className="gap-1.5" onClick={copyReferralLink}>
+                <Copy className="h-3.5 w-3.5" /> Copiar
+              </Button>
+            </div>
+          </Card>
+        ) : null}
 
 
         <div className="grid gap-6 lg:grid-cols-[380px_1fr]">

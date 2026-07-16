@@ -27,8 +27,22 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [referralCode, setReferralCode] = useState<string | null>(null);
   const { session } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get("ref");
+    if (ref) {
+      const clean = ref.trim().toUpperCase().slice(0, 16);
+      if (/^[A-Z0-9]+$/.test(clean)) {
+        setReferralCode(clean);
+        setMode("signup");
+      }
+    }
+  }, []);
 
   useEffect(() => {
     if (session) navigate({ to: "/app", replace: true });
@@ -49,7 +63,10 @@ function AuthPage() {
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: window.location.origin },
+          options: {
+            emailRedirectTo: window.location.origin,
+            data: referralCode ? { referral_code: referralCode } : undefined,
+          },
         });
         if (error) throw error;
         // No session means the account is awaiting e-mail confirmation.
@@ -59,6 +76,7 @@ function AuthPage() {
         }
         toast.success("Conta criada! Você já pode gerar legendas.");
       } else {
+
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
       }
@@ -112,6 +130,12 @@ function AuthPage() {
               ? "Bem-vindo de volta ao ViralCaption"
               : "Comece grátis com 5 gerações por dia"}
           </p>
+
+          {referralCode && mode === "signup" ? (
+            <div className="mt-4 rounded-md border border-primary/40 bg-brand-soft px-3 py-2 text-center text-xs text-foreground">
+              Você foi indicado com o código <strong>{referralCode}</strong>. Seu convidador ganha 5 gerações extras hoje.
+            </div>
+          ) : null}
 
           <Button
             variant="secondary"
