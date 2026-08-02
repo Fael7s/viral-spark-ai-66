@@ -172,30 +172,8 @@ function Landing() {
         </div>
       </section>
 
-      {/* Testimonials (placeholder) */}
-      <section className="mx-auto max-w-5xl px-4 py-16">
-        <h2 className="text-center text-3xl font-bold">Quem usa, aprova</h2>
-        <div className="mt-10 grid gap-6 md:grid-cols-3">
-          {[1, 2, 3].map((i) => (
-            <Card key={i} className="border-border/70 bg-card/60 p-6">
-              {/* TODO: substituir por depoimentos reais */}
-              <div className="mb-3 flex gap-0.5 text-primary">
-                {Array.from({ length: 5 }).map((_, k) => (
-                  <Star key={k} className="h-4 w-4 fill-current" />
-                ))}
-              </div>
-              <p className="text-sm text-muted-foreground">
-                “Depoimento de exemplo — economizei horas escrevendo legendas e meus vídeos passaram
-                a reter muito mais.” (TODO)
-              </p>
-              <p className="mt-4 text-sm font-semibold">Criador(a) de conteúdo</p>
-            </Card>
-          ))}
-        </div>
-      </section>
-
       {/* CTA */}
-      <section className="px-4 pb-24">
+      <section className="px-4 pb-24 pt-16">
         <Card className="mx-auto max-w-3xl overflow-hidden border-primary/40 bg-brand-soft p-10 text-center">
           <h2 className="text-3xl font-bold">Pronto para viralizar?</h2>
           <p className="mx-auto mt-3 max-w-md text-muted-foreground">

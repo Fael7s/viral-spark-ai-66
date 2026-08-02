@@ -73,6 +73,19 @@ function Reembolso() {
           do estorno. Nenhuma etapa adicional, formulário, ligação ou justificativa é exigida para
           que o reembolso seja processado.
         </p>
+        <p>
+          <strong className="text-foreground">Prazo de resposta:</strong> solicitações enviadas ao
+          e-mail de suporte são respondidas em até{" "}
+          <strong className="text-foreground">{VENDOR.prazoRespostaSuporte}</strong>. Esse prazo é
+          um compromisso comercial de atendimento e{" "}
+          <strong className="text-foreground">
+            não condiciona nem posterga o direito de arrependimento
+          </strong>
+          : exercido o direito do artigo 49 do Código de Defesa do Consumidor dentro dos 7 dias
+          corridos, a devolução é de imediato, independentemente do prazo de resposta do
+          atendimento. O prazo de resposta descreve o atendimento da garantia de satisfação do item
+          2.
+        </p>
       </LegalSection>
 
       <LegalSection title="4. Como o estorno é processado">

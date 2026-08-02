@@ -12,5 +12,11 @@ export const VENDOR = {
   prazoGarantiaSatisfacao: "15 dias corridos",
   /** Aviso prévio mínimo para alteração de preço de assinatura vigente. */
   prazoAvisoMudancaPreco: "30 dias",
+  /**
+   * SLA comercial de resposta a solicitações recebidas pelo e-mail de suporte.
+   * Não se aplica ao artigo 49 do CDC, cuja devolução é de imediato, nem aos
+   * pedidos de titulares sob a LGPD, que seguem os prazos da própria lei.
+   */
+  prazoRespostaSuporte: "5 dias úteis",
   dataPublicacao: "02/08/2026",
 } as const;
