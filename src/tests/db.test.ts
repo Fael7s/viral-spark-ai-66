@@ -9,21 +9,39 @@ describe("Banco de Dados", () => {
   const mockFrom = vi.fn();
   beforeEach(() => { vi.resetAllMocks(); (supabase as any).from = mockFrom; });
 
+  // fetchUsage dispara tres consultas em paralelo: subscriptions e usage_limits
+  // terminam em .maybeSingle(), enquanto referral_bonuses encadeia
+  // .eq("granted_date", hoje) e devolve uma lista. O double expoe as duas
+  // terminacoes na mesma cadeia. Sem bonus, o limite fica igual ao limite base
+  // do plano, que e o que estes testes sempre pretenderam verificar.
+  const usageDouble = (data: unknown, bonuses: unknown[] = []) => ({
+    select: vi.fn(() => ({
+      maybeSingle: vi.fn(() => Promise.resolve({ data, error: null })),
+      eq: vi.fn(() => Promise.resolve({ data: bonuses, error: null })),
+    })),
+  });
+
   it("plano free sem assinatura", async () => {
-    mockFrom.mockReturnValue({ select: vi.fn(() => ({ maybeSingle: vi.fn(() => Promise.resolve({ data: null, error: null })) })) });
+    mockFrom.mockReturnValue(usageDouble(null));
     const u = await fetchUsage();
     expect(u.plan).toBe("free"); expect(u.limit).toBe(FREE_DAILY_LIMIT);
   });
 
   it("plano pro ativo", async () => {
-    mockFrom.mockReturnValue({ select: vi.fn(() => ({ maybeSingle: vi.fn(() => Promise.resolve({ data: { plan: "pro" }, error: null })) })) });
+    mockFrom.mockReturnValue(usageDouble({ plan: "pro" }));
     const u = await fetchUsage();
     expect(u.plan).toBe("pro"); expect(u.limit).toBe(PRO_DAILY_LIMIT);
   });
 
   it("reseta contagem quando data diferente", async () => {
     const ontem = new Date(); ontem.setDate(ontem.getDate()-1);
-    mockFrom.mockReturnValue({ select: vi.fn(() => ({ maybeSingle: vi.fn(() => Promise.resolve({ data: { plan: "free", daily_count: 5, reset_date: ontem.toISOString().slice(0,10) }, error: null })) })) });
+    mockFrom.mockReturnValue(
+      usageDouble({
+        plan: "free",
+        daily_count: 5,
+        reset_date: ontem.toISOString().slice(0, 10),
+      }),
+    );
     const u = await fetchUsage(); expect(u.count).toBe(0);
   });
 
