@@ -169,7 +169,12 @@ export const Route = createFileRoute("/api/public/stripe-webhook")({
                   updated_at: new Date().toISOString(),
                 })
                 .eq("stripe_subscription_id", subscription.id);
-              if (error) console.error("[stripe-webhook] update error", error);
+              // Same contract as checkout.session.completed: a failed write has
+              // to reach Stripe as an error so the event is redelivered.
+              if (error) {
+                console.error("[stripe-webhook] subscription.updated error", error);
+                return new Response("Subscription update failed", { status: 500 });
+              }
               break;
             }
 
@@ -190,7 +195,13 @@ export const Route = createFileRoute("/api/public/stripe-webhook")({
                   updated_at: new Date().toISOString(),
                 })
                 .eq("stripe_subscription_id", subscription.id);
-              if (error) console.error("[stripe-webhook] delete error", error);
+              // Losing this write is the most expensive failure of the four: the
+              // customer cancelled, and a dropped event leaves them on Pro
+              // indefinitely. It must be redelivered.
+              if (error) {
+                console.error("[stripe-webhook] subscription.deleted error", error);
+                return new Response("Subscription downgrade failed", { status: 500 });
+              }
               break;
             }
 
@@ -209,7 +220,17 @@ export const Route = createFileRoute("/api/public/stripe-webhook")({
                     updated_at: new Date().toISOString(),
                   })
                   .eq("stripe_subscription_id", subscriptionId);
-                if (error) console.error("[stripe-webhook] payment_failed error", error);
+                // NOTE: this write only records status = past_due. It does not
+                // change `plan`, and access is gated on `plan` alone (see
+                // consume_generation in the migrations and fetchUsage in
+                // src/lib/db.ts), so a failed payment does not by itself remove
+                // Pro access even when this write succeeds. Whether it should is
+                // a product decision, deliberately not made here. The error
+                // handling is aligned with the other three regardless.
+                if (error) {
+                  console.error("[stripe-webhook] payment_failed error", error);
+                  return new Response("Payment failure update failed", { status: 500 });
+                }
               }
               break;
             }

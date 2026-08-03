@@ -10,11 +10,11 @@
 // (HMAC local, sem rede), e uma trava em globalThis.fetch aborta qualquer
 // tentativa de contato com host que nao seja loopback.
 //
-// O contrato verificado aqui:
-// - falha na consulta de idempotencia  -> 500 (Stripe reenvia)
-// - falha no upsert de subscriptions   -> 500 (Stripe reenvia)
-// - falha apenas na marcacao final     -> 200 (upgrade ja aplicado)
-// - caminho de sucesso                 -> 200
+// O contrato verificado, para os quatro tipos de evento tratados:
+// - falha na consulta de idempotencia -> 500 (Stripe reenvia)
+// - falha na escrita principal        -> 500 (Stripe reenvia)
+// - falha apenas na marcacao final    -> 200 (escrita principal ja aplicada)
+// - caminho de sucesso                -> 200
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import crypto from "node:crypto";
 import Stripe from "stripe";
@@ -66,32 +66,47 @@ function installNetworkGuard() {
   }) as typeof fetch;
 }
 
-/** Resposta que o stub do Supabase deve dar a cada rota do PostgREST. */
-interface SupabaseStubPlan {
-  /** GET em processed_webhooks: consulta de idempotencia. */
-  idempotency?: { status: number; body: unknown };
-  /** POST em subscriptions: o upsert do upgrade. */
-  upsert?: { status: number; body: unknown };
-  /** POST em processed_webhooks: a marcacao final. */
-  mark?: { status: number; body: unknown };
+type EventKind =
+  | "checkout.session.completed"
+  | "customer.subscription.updated"
+  | "customer.subscription.deleted"
+  | "invoice.payment_failed";
+
+/** Etapas de I/O observaveis do handler, na ordem em que podem ocorrer. */
+type Step = "idempotency" | "ordering" | "write" | "mark";
+
+interface StubReply {
+  status: number;
+  body: unknown;
 }
 
+/** Resposta que o stub do Supabase deve dar em cada etapa. */
+type SupabaseStubPlan = Partial<Record<Step, StubReply>>;
+
+const DEFAULT_REPLIES: Record<Step, StubReply> = {
+  // maybeSingle sem linha: evento ainda nao processado.
+  idempotency: { status: 200, body: null },
+  // maybeSingle sem linha: sem evento anterior, entao o atual e mais novo.
+  ordering: { status: 200, body: null },
+  write: { status: 201, body: [] },
+  mark: { status: 201, body: [] },
+};
+
 async function startSupabaseStub(plan: SupabaseStubPlan) {
-  const calls: string[] = [];
+  const calls: Step[] = [];
   const srv = createServer((req, res) => {
     const url = req.url ?? "";
     const method = req.method ?? "";
-    let reply = { status: 200, body: [] as unknown };
-    if (method === "GET" && url.includes("processed_webhooks")) {
-      calls.push("idempotency");
-      reply = plan.idempotency ?? { status: 200, body: null };
-    } else if (method === "POST" && url.includes("subscriptions")) {
-      calls.push("upsert");
-      reply = plan.upsert ?? { status: 201, body: [] };
-    } else if (method === "POST" && url.includes("processed_webhooks")) {
-      calls.push("mark");
-      reply = plan.mark ?? { status: 201, body: [] };
-    }
+    let step: Step | undefined;
+    if (method === "GET" && url.includes("processed_webhooks")) step = "idempotency";
+    else if (method === "GET" && url.includes("subscriptions")) step = "ordering";
+    // POST (upsert) e PATCH (update) sao ambos a escrita principal do evento.
+    else if ((method === "POST" || method === "PATCH") && url.includes("subscriptions"))
+      step = "write";
+    else if (method === "POST" && url.includes("processed_webhooks")) step = "mark";
+
+    const reply = step ? (plan[step] ?? DEFAULT_REPLIES[step]) : { status: 200, body: [] };
+    if (step) calls.push(step);
     res.writeHead(reply.status, { "content-type": "application/json" });
     res.end(JSON.stringify(reply.body));
   });
@@ -101,24 +116,45 @@ async function startSupabaseStub(plan: SupabaseStubPlan) {
   return { srv, port, calls };
 }
 
-function buildSignedRequest() {
+function eventPayload(kind: EventKind) {
+  const subscriptionId = "sub_isolated_" + crypto.randomBytes(8).toString("hex");
+  const periodEnd = Math.floor(Date.now() / 1000) + 2592000;
+
+  if (kind === "checkout.session.completed") {
+    return {
+      id: "cs_isolated_" + crypto.randomBytes(8).toString("hex"),
+      object: "checkout.session",
+      mode: "subscription",
+      subscription: subscriptionId,
+      customer: "cus_isolated_" + crypto.randomBytes(8).toString("hex"),
+      client_reference_id: fakeUserId,
+      metadata: { supabase_user_id: fakeUserId },
+    };
+  }
+  if (kind === "invoice.payment_failed") {
+    return {
+      id: "in_isolated_" + crypto.randomBytes(8).toString("hex"),
+      object: "invoice",
+      subscription: subscriptionId,
+    };
+  }
+  // customer.subscription.updated e customer.subscription.deleted
+  return {
+    id: subscriptionId,
+    object: "subscription",
+    status: kind === "customer.subscription.deleted" ? "canceled" : "active",
+    items: { data: [{ current_period_end: periodEnd }] },
+  };
+}
+
+function buildSignedRequest(kind: EventKind) {
   const payload = JSON.stringify({
     id: "evt_isolated_" + crypto.randomBytes(8).toString("hex"),
     object: "event",
     api_version: "2024-06-20",
     created: Math.floor(Date.now() / 1000),
-    type: "checkout.session.completed",
-    data: {
-      object: {
-        id: "cs_isolated_" + crypto.randomBytes(8).toString("hex"),
-        object: "checkout.session",
-        mode: "subscription",
-        subscription: "sub_isolated_" + crypto.randomBytes(8).toString("hex"),
-        customer: "cus_isolated_" + crypto.randomBytes(8).toString("hex"),
-        client_reference_id: fakeUserId,
-        metadata: { supabase_user_id: fakeUserId },
-      },
-    },
+    type: kind,
+    data: { object: eventPayload(kind) },
   });
   const header = Stripe.webhooks.generateTestHeaderString({
     payload,
@@ -131,7 +167,7 @@ function buildSignedRequest() {
   });
 }
 
-async function invokeHandler(): Promise<Response> {
+async function invokeHandler(kind: EventKind): Promise<Response> {
   vi.resetModules();
   const mod = await import("@/routes/api/public/stripe-webhook");
   // A rota nao expoe os handlers em tipos publicos; alcancamos o POST real
@@ -141,13 +177,24 @@ async function invokeHandler(): Promise<Response> {
       server: { handlers: { POST: (ctx: { request: Request }) => Promise<Response> } };
     };
   };
-  return route.options.server.handlers.POST({ request: buildSignedRequest() });
+  return route.options.server.handlers.POST({ request: buildSignedRequest(kind) });
 }
 
 const invalidKeyBody = { message: "Invalid API key", hint: null, code: "401" };
+const writeFailureBody = { message: "permission denied", hint: null, code: "42501" };
+
+// Apenas customer.subscription.updated e .deleted passam pela checagem de
+// ordenacao (isNewerEvent) antes de escrever. checkout.session.completed e
+// invoice.payment_failed vao direto para a escrita.
+const KINDS: { kind: EventKind; checksOrdering: boolean }[] = [
+  { kind: "checkout.session.completed", checksOrdering: false },
+  { kind: "customer.subscription.updated", checksOrdering: true },
+  { kind: "customer.subscription.deleted", checksOrdering: true },
+  { kind: "invoice.payment_failed", checksOrdering: false },
+];
 
 describe("webhook: contrato de status HTTP em falhas de escrita", () => {
-  let stub: { srv: Server; port: number; calls: string[] } | undefined;
+  let stub: { srv: Server; port: number; calls: Step[] } | undefined;
 
   beforeEach(() => {
     attemptedHosts.length = 0;
@@ -156,6 +203,7 @@ describe("webhook: contrato de status HTTP em falhas de escrita", () => {
     process.env.SUPABASE_SERVICE_ROLE_KEY = "fake-key-for-isolated-test";
     vi.spyOn(console, "error").mockImplementation(() => {});
     vi.spyOn(console, "warn").mockImplementation(() => {});
+    vi.spyOn(console, "log").mockImplementation(() => {});
   });
 
   afterEach(async () => {
@@ -168,39 +216,45 @@ describe("webhook: contrato de status HTTP em falhas de escrita", () => {
     expect(attemptedHosts.every((h) => h === "127.0.0.1" || h === "localhost")).toBe(true);
   });
 
-  async function run(plan: SupabaseStubPlan) {
+  async function run(kind: EventKind, plan: SupabaseStubPlan) {
     stub = await startSupabaseStub(plan);
     process.env.SUPABASE_URL = `http://127.0.0.1:${stub.port}`;
-    return invokeHandler();
+    return invokeHandler(kind);
   }
 
-  it("falha na consulta de idempotencia retorna 500 e nao escreve nada", async () => {
-    const res = await run({ idempotency: { status: 401, body: invalidKeyBody } });
-    expect(res.status).toBe(500);
-    // Nao deve ter prosseguido para o upsert nem para a marcacao.
-    expect(stub!.calls).toEqual(["idempotency"]);
-  });
+  for (const { kind, checksOrdering } of KINDS) {
+    describe(kind, () => {
+      const beforeWrite: Step[] = checksOrdering ? ["idempotency", "ordering"] : ["idempotency"];
+      const fullPath: Step[] = [...beforeWrite, "write", "mark"];
 
-  it("falha no upsert de subscriptions retorna 500 e nao marca o evento", async () => {
-    const res = await run({ upsert: { status: 401, body: invalidKeyBody } });
-    expect(res.status).toBe(500);
-    expect(stub!.calls).toEqual(["idempotency", "upsert"]);
-    // A marcacao final nunca deve acontecer se o upgrade falhou.
-    expect(stub!.calls).not.toContain("mark");
-  });
+      it("falha na consulta de idempotencia retorna 500 e nao escreve nada", async () => {
+        const res = await run(kind, { idempotency: { status: 401, body: invalidKeyBody } });
+        expect(res.status).toBe(500);
+        expect(stub!.calls).toEqual(["idempotency"]);
+      });
 
-  it("falha apenas na marcacao final ainda retorna 200", async () => {
-    const res = await run({ mark: { status: 500, body: { message: "boom", code: "XX000" } } });
-    expect(res.status).toBe(200);
-    expect(await res.text()).toBe("ok");
-    // O upgrade foi aplicado; so a marcacao falhou.
-    expect(stub!.calls).toEqual(["idempotency", "upsert", "mark"]);
-  });
+      it("falha na escrita principal retorna 500 e nao marca o evento", async () => {
+        const res = await run(kind, { write: { status: 403, body: writeFailureBody } });
+        expect(res.status).toBe(500);
+        expect(stub!.calls).toEqual([...beforeWrite, "write"]);
+        expect(stub!.calls).not.toContain("mark");
+      });
 
-  it("caminho de sucesso completo retorna 200", async () => {
-    const res = await run({});
-    expect(res.status).toBe(200);
-    expect(await res.text()).toBe("ok");
-    expect(stub!.calls).toEqual(["idempotency", "upsert", "mark"]);
-  });
+      it("falha apenas na marcacao final ainda retorna 200", async () => {
+        const res = await run(kind, {
+          mark: { status: 500, body: { message: "boom", code: "XX000" } },
+        });
+        expect(res.status).toBe(200);
+        expect(await res.text()).toBe("ok");
+        expect(stub!.calls).toEqual(fullPath);
+      });
+
+      it("caminho de sucesso completo retorna 200", async () => {
+        const res = await run(kind, {});
+        expect(res.status).toBe(200);
+        expect(await res.text()).toBe("ok");
+        expect(stub!.calls).toEqual(fullPath);
+      });
+    });
+  }
 });
