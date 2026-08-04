@@ -1,9 +1,20 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Sparkles, Zap, Star, ArrowRight, Check, TrendingUp, Clock, Hash } from "lucide-react";
+import {
+  Sparkles,
+  Zap,
+  Star,
+  ArrowRight,
+  Check,
+  TrendingUp,
+  Clock,
+  Hash,
+  Mail,
+} from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { VENDOR } from "@/lib/vendor";
 
 export const Route = createFileRoute("/")({
   component: Landing,
@@ -108,7 +119,9 @@ function Landing() {
       {/* Pricing */}
       <section className="mx-auto max-w-4xl px-4 py-16">
         <h2 className="text-center text-3xl font-bold">Planos</h2>
-        <p className="mt-2 text-center text-muted-foreground">Comece grátis, evolua quando quiser.</p>
+        <p className="mt-2 text-center text-muted-foreground">
+          Comece grátis, evolua quando quiser.
+        </p>
         <div className="mt-10 grid gap-6 md:grid-cols-2">
           <Card className="border-border/70 bg-card/60 p-7">
             <h3 className="text-xl font-bold">Free</h3>
@@ -159,30 +172,8 @@ function Landing() {
         </div>
       </section>
 
-      {/* Testimonials (placeholder) */}
-      <section className="mx-auto max-w-5xl px-4 py-16">
-        <h2 className="text-center text-3xl font-bold">Quem usa, aprova</h2>
-        <div className="mt-10 grid gap-6 md:grid-cols-3">
-          {[1, 2, 3].map((i) => (
-            <Card key={i} className="border-border/70 bg-card/60 p-6">
-              {/* TODO: substituir por depoimentos reais */}
-              <div className="mb-3 flex gap-0.5 text-primary">
-                {Array.from({ length: 5 }).map((_, k) => (
-                  <Star key={k} className="h-4 w-4 fill-current" />
-                ))}
-              </div>
-              <p className="text-sm text-muted-foreground">
-                “Depoimento de exemplo — economizei horas escrevendo legendas e meus vídeos passaram
-                a reter muito mais.” (TODO)
-              </p>
-              <p className="mt-4 text-sm font-semibold">Criador(a) de conteúdo</p>
-            </Card>
-          ))}
-        </div>
-      </section>
-
       {/* CTA */}
-      <section className="px-4 pb-24">
+      <section className="px-4 pb-24 pt-16">
         <Card className="mx-auto max-w-3xl overflow-hidden border-primary/40 bg-brand-soft p-10 text-center">
           <h2 className="text-3xl font-bold">Pronto para viralizar?</h2>
           <p className="mx-auto mt-3 max-w-md text-muted-foreground">
@@ -200,8 +191,47 @@ function Landing() {
         </Card>
       </section>
 
-      <footer className="border-t border-border/60 py-8 text-center text-sm text-muted-foreground">
-        © {new Date().getFullYear()} ViralCaption. Feito para criadores.
+      {/* Contato */}
+      <section className="mx-auto max-w-3xl px-4 pb-20">
+        <h2 className="text-center text-3xl font-bold">Contato</h2>
+        <p className="mt-3 text-center text-muted-foreground">
+          Dúvidas, suporte, cancelamento ou reembolso: fale direto por e-mail. Respondemos pelo
+          mesmo endereço.
+        </p>
+        <div className="mt-6 flex justify-center">
+          <Button asChild variant="secondary" size="lg" className="gap-2">
+            <a href={`mailto:${VENDOR.emailSuporte}`}>
+              <Mail className="h-4 w-4" />
+              {VENDOR.emailSuporte}
+            </a>
+          </Button>
+        </div>
+      </section>
+
+      <footer className="border-t border-border/60 py-10 text-center text-sm text-muted-foreground">
+        <p>© {new Date().getFullYear()} ViralCaption. Feito para criadores.</p>
+        <p className="mt-3">
+          {VENDOR.nome} — CPF {VENDOR.cpf}
+        </p>
+        <p className="mt-1">
+          <a
+            href={`mailto:${VENDOR.emailSuporte}`}
+            className="text-primary underline underline-offset-4 hover:opacity-80"
+          >
+            {VENDOR.emailSuporte}
+          </a>
+        </p>
+        <nav className="mt-4 flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
+          <Link to="/termos" className="hover:text-foreground">
+            Termos de Uso
+          </Link>
+          <Link to="/privacidade" className="hover:text-foreground">
+            Política de Privacidade
+          </Link>
+          <Link to="/reembolso" className="hover:text-foreground">
+            Política de Reembolso
+          </Link>
+        </nav>
       </footer>
     </div>
   );

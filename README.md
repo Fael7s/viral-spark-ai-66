@@ -21,8 +21,10 @@ Um modelo está disponível em [`.env.example`](./.env.example).
 Configure no painel do Stripe um webhook apontando para:
 
 ```
-https://<seu-dominio>/api/public/stripe-webhook
+https://viral-spark-ai-66.lovable.app/api/public/stripe-webhook
 ```
+
+Cadastre essa URL no Dashboard da Stripe em Developers > Webhooks > Add endpoint.
 
 Eventos necessários:
 

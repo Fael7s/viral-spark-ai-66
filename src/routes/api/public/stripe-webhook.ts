@@ -86,11 +86,20 @@ export const Route = createFileRoute("/api/public/stripe-webhook")({
         const db = supabaseAdmin as unknown as { from: (t: string) => any };
 
         // Idempotency: ignore events we've already processed.
-        const { data: alreadyProcessed } = await db
+        // A failed lookup must never be treated as "new event": doing so would
+        // replay the writes below blind, with no idempotency protection.
+        const { data: alreadyProcessed, error: idempotencyError } = await db
           .from("processed_webhooks")
           .select("stripe_event_id")
           .eq("stripe_event_id", event.id)
           .maybeSingle();
+        // PGRST116 is "no rows found". maybeSingle() normally reports that as
+        // data: null with no error, but it is tolerated explicitly so the
+        // ordinary new-event path is never confused with a real read failure.
+        if (idempotencyError && (idempotencyError as { code?: string }).code !== "PGRST116") {
+          console.error("[stripe-webhook] idempotency check failed", idempotencyError);
+          return new Response("Idempotency check failed", { status: 500 });
+        }
         if (alreadyProcessed) {
           return new Response("ok", { status: 200 });
         }
@@ -133,7 +142,13 @@ export const Route = createFileRoute("/api/public/stripe-webhook")({
                   },
                   { onConflict: "user_id" },
                 );
-              if (error) console.error("[stripe-webhook] upsert error", error);
+              // A failed upgrade write must surface as an error so Stripe
+              // retries the event. Returning 200 here would drop the upgrade
+              // silently while the customer is already charged.
+              if (error) {
+                console.error("[stripe-webhook] upsert error", error);
+                return new Response("Subscription upsert failed", { status: 500 });
+              }
               break;
             }
 
@@ -154,7 +169,12 @@ export const Route = createFileRoute("/api/public/stripe-webhook")({
                   updated_at: new Date().toISOString(),
                 })
                 .eq("stripe_subscription_id", subscription.id);
-              if (error) console.error("[stripe-webhook] update error", error);
+              // Same contract as checkout.session.completed: a failed write has
+              // to reach Stripe as an error so the event is redelivered.
+              if (error) {
+                console.error("[stripe-webhook] subscription.updated error", error);
+                return new Response("Subscription update failed", { status: 500 });
+              }
               break;
             }
 
@@ -175,7 +195,13 @@ export const Route = createFileRoute("/api/public/stripe-webhook")({
                   updated_at: new Date().toISOString(),
                 })
                 .eq("stripe_subscription_id", subscription.id);
-              if (error) console.error("[stripe-webhook] delete error", error);
+              // Losing this write is the most expensive failure of the four: the
+              // customer cancelled, and a dropped event leaves them on Pro
+              // indefinitely. It must be redelivered.
+              if (error) {
+                console.error("[stripe-webhook] subscription.deleted error", error);
+                return new Response("Subscription downgrade failed", { status: 500 });
+              }
               break;
             }
 
@@ -194,7 +220,17 @@ export const Route = createFileRoute("/api/public/stripe-webhook")({
                     updated_at: new Date().toISOString(),
                   })
                   .eq("stripe_subscription_id", subscriptionId);
-                if (error) console.error("[stripe-webhook] payment_failed error", error);
+                // NOTE: this write only records status = past_due. It does not
+                // change `plan`, and access is gated on `plan` alone (see
+                // consume_generation in the migrations and fetchUsage in
+                // src/lib/db.ts), so a failed payment does not by itself remove
+                // Pro access even when this write succeeds. Whether it should is
+                // a product decision, deliberately not made here. The error
+                // handling is aligned with the other three regardless.
+                if (error) {
+                  console.error("[stripe-webhook] payment_failed error", error);
+                  return new Response("Payment failure update failed", { status: 500 });
+                }
               }
               break;
             }
@@ -208,8 +244,33 @@ export const Route = createFileRoute("/api/public/stripe-webhook")({
           return new Response("Handler error", { status: 500 });
         }
 
-        // Mark event as processed for idempotency (ignore duplicate insert races).
-        await db.from("processed_webhooks").insert({ stripe_event_id: event.id });
+        // Mark event as processed for idempotency.
+        // This failure is deliberately handled differently from the two above:
+        // by this point the subscription write already succeeded. Returning 500
+        // would make Stripe retry and reprocess the whole upgrade, and the
+        // idempotency guard that would have stopped the replay is precisely
+        // what failed to be written. A duplicate upgrade is worse than a
+        // missing marker row, so the event is acknowledged and the gap is
+        // logged loudly for manual follow-up instead.
+        const { error: markError } = await db
+          .from("processed_webhooks")
+          .insert({ stripe_event_id: event.id });
+        if (markError) {
+          // 23505 is a unique violation: a concurrent delivery already marked
+          // this event. Benign race, not a durability gap.
+          if ((markError as { code?: string }).code === "23505") {
+            console.warn(
+              "[stripe-webhook] event already marked as processed by a concurrent delivery",
+              { stripe_event_id: event.id },
+            );
+          } else {
+            console.error(
+              "[stripe-webhook] CRITICAL: event processed but NOT marked as processed. " +
+                "A future redelivery of this event would be reprocessed instead of skipped.",
+              { stripe_event_id: event.id, error: markError },
+            );
+          }
+        }
 
         return new Response("ok", { status: 200 });
       },
