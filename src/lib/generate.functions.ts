@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { buildMessages, callAiGateway } from "./generate.server";
-import { FREE_DAILY_LIMIT, PRO_DAILY_LIMIT } from "./types";
+import { FREE_DAILY_LIMIT, PRO_DAILY_LIMIT, isProOnlyTone, assertTonePermitted } from "./types";
 
 const inputSchema = z.object({
   platform: z.enum(["tiktok", "reels", "shorts"]),
@@ -17,7 +17,29 @@ export const generateContent = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const supabase = context.supabase as unknown as {
       rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }>;
+      from: (table: string) => {
+        select: (columns: string) => {
+          maybeSingle: () => Promise<{ data: unknown; error: unknown }>;
+        };
+      };
     };
+
+    // Pro-only tones are hidden in the UI for Free accounts, but this endpoint
+    // is callable directly, so the plan has to be enforced here. Checked before
+    // consume_generation so a rejected request does not burn a daily generation.
+    // Same source of truth as fetchUsage: subscriptions.plan, read through the
+    // caller's own client, which RLS scopes to their own row.
+    if (isProOnlyTone(data.tone)) {
+      const { data: sub, error: planError } = await supabase
+        .from("subscriptions")
+        .select("plan")
+        .maybeSingle();
+      if (planError) {
+        console.error("[generate] plan lookup failed", planError);
+        throw new Error("AI_ERROR");
+      }
+      assertTonePermitted(data.tone, (sub as { plan?: string } | null)?.plan);
+    }
 
     // Atomic daily-limit check + consume (race-safe in Postgres).
     const { data: consume, error: consumeError } = await supabase.rpc("consume_generation", {
