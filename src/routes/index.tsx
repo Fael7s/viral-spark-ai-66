@@ -168,6 +168,7 @@ function Landing() {
             >
               <Link to="/auth">Assinar o Pro</Link>
             </Button>
+            <p className="mt-3 text-center text-xs text-muted-foreground">Crie sua conta e finalize a assinatura no próximo passo</p>
           </Card>
         </div>
       </section>
