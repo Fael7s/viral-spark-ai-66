@@ -38,5 +38,28 @@ export const TONES: { value: Tone; label: string; pro?: boolean }[] = [
   { value: "luxo", label: "Luxo / Aspiracional", pro: true },
 ];
 
+/**
+ * Tons exclusivos do plano Pro. Derivado de TONES para que a lista nunca
+ * divirja da marcacao usada na interface. A interface esconde estes tons de
+ * contas Free, mas o endpoint de geracao e chamavel diretamente, entao a
+ * validacao que vale e a do servidor, em generate.functions.ts.
+ */
+export const PRO_ONLY_TONES: Tone[] = TONES.filter((t) => t.pro).map((t) => t.value);
+
+export function isProOnlyTone(tone: Tone): boolean {
+  return PRO_ONLY_TONES.includes(tone);
+}
+
+/**
+ * Portao de plano para tons Pro. Lanca TONE_REQUIRES_PRO quando uma conta
+ * fora do plano Pro pede um tom exclusivo. Plano ausente ou desconhecido
+ * conta como Free, para que a falta de dado nunca libere acesso.
+ */
+export function assertTonePermitted(tone: Tone, plan: string | null | undefined): void {
+  if (isProOnlyTone(tone) && (plan ?? "free") !== "pro") {
+    throw new Error("TONE_REQUIRES_PRO");
+  }
+}
+
 export const FREE_DAILY_LIMIT = 5;
 export const PRO_DAILY_LIMIT = 500; // high soft cap to protect against abuse
