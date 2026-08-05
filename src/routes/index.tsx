@@ -148,7 +148,7 @@ function Landing() {
             <h3 className="text-xl font-bold">Pro</h3>
             <p className="mt-1 text-sm text-muted-foreground">Para criadores em ritmo acelerado</p>
             <p className="mt-4 text-4xl font-extrabold">
-              R$29<span className="text-base font-normal text-muted-foreground">/mês</span>
+              R$29,90<span className="text-base font-normal text-muted-foreground">/mês</span>
             </p>
             <ul className="mt-6 space-y-3 text-sm">
               {[
