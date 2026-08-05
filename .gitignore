@@ -32,6 +32,15 @@ dist-ssr
 *.sw?
 
 # Secrets
+# NOTA: .env está listado aqui mas é intencionalmente rastreado pelo Git
+# (veja 'git ls-files' para confirmar). O Lovable Cloud (plataforma de
+# deploy) exige que este arquivo esteja versionado para que o Vite embuta
+# as variáveis VITE_* no bundle durante o build — removê-lo do controle de
+# versão quebra o site em produção (já aconteceu uma vez). As variáveis
+# contidas são publishable keys do Supabase, desenhadas para serem
+# públicas, não segredos reais. NÃO remover este arquivo do controle de
+# versão sem antes confirmar a dependência de build com a documentação do
+# Lovable Cloud.
 .env
 .env.local
 .env.*.local
