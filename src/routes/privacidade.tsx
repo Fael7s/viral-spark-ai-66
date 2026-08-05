@@ -92,9 +92,7 @@ function Privacidade() {
 
       <LegalSection title="5. Transferência internacional">
         <p>
-          Os operadores acima podem processar dados em servidores localizados fora do Brasil. Essas
-          transferências ocorrem nos termos do capítulo V da LGPD, amparadas em cláusulas
-          contratuais e garantias oferecidas por esses fornecedores.
+          Os operadores acima podem processar dados em servidores localizados fora do Brasil. Especificamente, seus dados pessoais são armazenados e processados em servidores localizados nos Estados Unidos, operados pela Supabase Inc. sobre infraestrutura da Amazon Web Services. Essas transferências ocorrem nos termos do Capítulo V da LGPD, amparadas em cláusulas contratuais e garantias oferecidas por esses fornecedores, nos termos do art. 33, inciso II, da Lei Geral de Proteção de Dados (Lei 13.709/2018).
         </p>
       </LegalSection>
 
