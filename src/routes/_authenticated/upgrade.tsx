@@ -2,7 +2,7 @@ import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Crown, Check, Sparkles, Loader2 } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -27,11 +27,10 @@ const BENEFITS = [
   "500 gerações por dia (100x o plano gratuito)",
   "Todos os tons, incluindo Provocativo e Luxo",
   "Prioridade na geração de conteúdo",
-  "Histórico e favoritos ilimitados",
+  "Histórico dos 100 mais recentes, favoritos sem limite",
 ];
 
 const PRICE_DISPLAY = import.meta.env.VITE_PRICE_DISPLAY ?? "R$ 29,90";
-
 
 function UpgradePage() {
   const checkout = useServerFn(createCheckoutSession);
@@ -51,7 +50,9 @@ function UpgradePage() {
       }
       const key = Object.keys(ERROR_MESSAGES).find((k) => msg.includes(k));
       toast.error(
-        key ? ERROR_MESSAGES[key] : "Não foi possível iniciar o checkout. Tente novamente em instantes.",
+        key
+          ? ERROR_MESSAGES[key]
+          : "Não foi possível iniciar o checkout. Tente novamente em instantes.",
       );
       setLoading(false);
     }
@@ -61,28 +62,23 @@ function UpgradePage() {
     <div className="min-h-screen">
       <SiteHeader />
       <main className="mx-auto max-w-2xl px-4 py-12">
-        <div className="mb-8 text-center">
-          <span className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-brand shadow-glow">
-            <Crown className="h-7 w-7 text-primary-foreground" />
-          </span>
-          <h1 className="text-3xl font-bold">Desbloqueie o ViralCaption Pro</h1>
-          <p className="mx-auto mt-2 max-w-md text-muted-foreground">
-            Crie sem limites e leve seus vídeos ao próximo nível.
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold">Quando cinco por dia não dão conta</h1>
+          <p className="mt-3 max-w-md text-muted-foreground">
+            O Pro solta o limite diário e libera os tons que ficam trancados no plano grátis.
           </p>
         </div>
 
-        <Card className="border-primary/40 bg-card/80 p-8">
+        <Card className="border-border bg-card p-8">
           <div className="mb-6 flex items-baseline gap-2">
             <span className="text-4xl font-extrabold">Pro</span>
             <span className="text-muted-foreground">assinatura mensal</span>
           </div>
 
           <div className="mb-6 flex items-baseline gap-1">
-            <span className="text-3xl font-extrabold text-gradient">{PRICE_DISPLAY}</span>
+            <span className="font-display text-3xl font-bold text-primary">{PRICE_DISPLAY}</span>
             <span className="text-sm text-muted-foreground">/mês</span>
           </div>
-
-
 
           <ul className="space-y-3">
             {BENEFITS.map((b) => (
@@ -96,19 +92,15 @@ function UpgradePage() {
           </ul>
 
           <Button
-            className="mt-8 w-full gap-2 bg-brand text-primary-foreground hover:opacity-90"
+            className="mt-8 w-full gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
             disabled={loading}
             onClick={handleSubscribe}
           >
-            {loading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Sparkles className="h-4 w-4" />
-            )}
-            {loading ? "Redirecionando..." : "Assinar agora"}
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+            {loading ? "Abrindo o checkout..." : "Assinar o Pro"}
           </Button>
           <p className="mt-3 text-center text-xs text-muted-foreground">
-            Pagamento seguro processado pelo Stripe. Cancele quando quiser.
+            Pagamento processado pelo Stripe. Cancela quando quiser, direto no painel.
           </p>
         </Card>
       </main>

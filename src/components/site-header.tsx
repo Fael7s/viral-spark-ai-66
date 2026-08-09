@@ -1,17 +1,22 @@
 import { Link, useRouter } from "@tanstack/react-router";
-import { Sparkles, LogOut, History, Star, Wand2 } from "lucide-react";
+import { LogOut, History, Star, Wand2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 
 export function Logo({ className }: { className?: string }) {
   return (
-    <Link to="/" className={`flex items-center gap-2 font-extrabold text-lg ${className ?? ""}`}>
-      <span className="grid h-8 w-8 place-items-center rounded-lg bg-brand shadow-glow">
-        <Sparkles className="h-4 w-4 text-primary-foreground" />
+    <Link
+      to="/"
+      className={`flex items-center gap-2.5 font-display text-lg font-bold tracking-tight ${className ?? ""}`}
+    >
+      {/* Monograma VC — mesma forma do favicon em public/favicon.svg. */}
+      <span
+        aria-hidden
+        className="grid h-8 w-8 place-items-center rounded-sm bg-primary font-display text-[13px] font-bold leading-none text-primary-foreground"
+      >
+        VC
       </span>
-      <span>
-        Viral<span className="text-gradient">Caption</span>
-      </span>
+      <span>ViralCaption</span>
     </Link>
   );
 }
@@ -42,7 +47,13 @@ export function SiteHeader() {
             {navItem("/app", "Gerar", Wand2)}
             {navItem("/history", "Histórico", History)}
             {navItem("/favorites", "Favoritos", Star)}
-            <Button variant="ghost" size="icon" onClick={signOut} aria-label="Sair" className="ml-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={signOut}
+              aria-label="Sair"
+              className="ml-1"
+            >
               <LogOut className="h-4 w-4" />
             </Button>
           </nav>
@@ -51,7 +62,7 @@ export function SiteHeader() {
             <Button variant="ghost" asChild>
               <Link to="/auth">Entrar</Link>
             </Button>
-            <Button asChild className="bg-brand text-primary-foreground hover:opacity-90">
+            <Button asChild className="bg-primary text-primary-foreground hover:bg-primary/90">
               <Link to="/auth">Começar grátis</Link>
             </Button>
           </div>

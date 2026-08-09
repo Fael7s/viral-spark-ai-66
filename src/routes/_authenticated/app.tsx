@@ -3,7 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Wand2, Sparkles, Star, Crown, AlertCircle, Copy, Gift } from "lucide-react";
+import { Wand2, Star, Crown, AlertCircle, Copy, Gift } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { ResultCards, ResultCardsSkeleton } from "@/components/result-cards";
 import { Button } from "@/components/ui/button";
@@ -63,7 +63,7 @@ function GeneratePage() {
     if (!referralLink) return;
     try {
       await navigator.clipboard.writeText(referralLink);
-      toast.success("Link copiado!");
+      toast.success("Link copiado.");
     } catch {
       toast.error("Não foi possível copiar o link.");
     }
@@ -81,12 +81,12 @@ function GeneratePage() {
     onError: (err: Error) => {
       if (err.message.includes("LIMIT_REACHED")) {
         setLimitHit(true);
-        toast.error("Limite diário atingido.");
+        toast.error("Acabaram as gerações de hoje.");
         queryClient.invalidateQueries({ queryKey: ["usage"] });
         return;
       }
       const key = Object.keys(ERROR_MESSAGES).find((k) => err.message.includes(k));
-      toast.error(key ? ERROR_MESSAGES[key] : "Falha ao gerar. Tente novamente.");
+      toast.error(key ? ERROR_MESSAGES[key] : "Não deu para escrever agora. Tenta de novo.");
     },
   });
 
@@ -97,7 +97,7 @@ function GeneratePage() {
     try {
       await toggleFavorite(user.id, result.id, next);
       queryClient.invalidateQueries({ queryKey: ["favorites"] });
-      toast.success(next ? "Adicionado aos favoritos!" : "Removido dos favoritos.");
+      toast.success(next ? "Salvo nos favoritos." : "Tirado dos favoritos.");
     } catch {
       setFavorited(!next);
       toast.error("Não foi possível salvar o favorito.");
@@ -114,26 +114,21 @@ function GeneratePage() {
       <main className="mx-auto max-w-6xl px-4 py-8">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold">Gerar conteúdo viral</h1>
+            <h1 className="text-2xl font-bold">Escrever</h1>
             <p className="text-sm text-muted-foreground">
-              Descreva seu vídeo e receba hooks, legendas, emojis e hashtags.
+              Conta do que é o vídeo. Volta gancho, legenda, emoji e hashtag.
             </p>
           </div>
           <div className="flex items-center gap-2">
             {usage ? (
-              <Badge
-                variant="secondary"
-                className="gap-1.5 py-1.5"
-                title="Gerações usadas hoje"
-              >
+              <Badge variant="secondary" className="gap-1.5 py-1.5" title="Gerações usadas hoje">
                 {isPro ? (
                   <>
                     <Crown className="h-3.5 w-3.5 text-primary" /> Pro
                   </>
                 ) : (
                   <>
-                    <Sparkles className="h-3.5 w-3.5 text-primary" /> {remaining}/{usage.limit}{" "}
-                    restantes hoje
+                    {remaining}/{usage.limit} restantes hoje
                   </>
                 )}
               </Badge>
@@ -151,7 +146,7 @@ function GeneratePage() {
               <Button
                 asChild
                 size="sm"
-                className="gap-1.5 bg-brand text-primary-foreground hover:opacity-90"
+                className="gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90"
               >
                 <Link to="/upgrade">
                   <Crown className="h-3.5 w-3.5" /> Upgrade
@@ -164,13 +159,14 @@ function GeneratePage() {
         {referral?.code ? (
           <Card className="mb-6 flex flex-wrap items-center gap-4 border-border/70 bg-card/80 p-4">
             <div className="flex items-center gap-2">
-              <div className="grid h-9 w-9 place-items-center rounded-md bg-brand-soft">
+              <div className="grid h-9 w-9 place-items-center rounded-md bg-primary/10">
                 <Gift className="h-4 w-4 text-primary" />
               </div>
               <div>
                 <p className="text-sm font-semibold">Indique e ganhe +5 gerações/dia</p>
                 <p className="text-xs text-muted-foreground">
-                  {referral.totalReferrals} indicaç{referral.totalReferrals === 1 ? "ão" : "ões"} · +{referral.totalBonus} gerações no total
+                  {referral.totalReferrals} indicaç{referral.totalReferrals === 1 ? "ão" : "ões"} ·
+                  +{referral.totalBonus} gerações no total
                 </p>
               </div>
             </div>
@@ -182,7 +178,6 @@ function GeneratePage() {
             </div>
           </Card>
         ) : null}
-
 
         <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
           {/* Input panel */}
@@ -257,26 +252,28 @@ function GeneratePage() {
             </div>
 
             <Button
-              className="w-full gap-2 bg-brand text-primary-foreground hover:opacity-90"
+              className="w-full gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
               disabled={mutation.isPending || topic.trim().length < 3 || blocked}
               onClick={() => mutation.mutate()}
             >
               <Wand2 className="h-4 w-4" />
-              {mutation.isPending ? "Gerando..." : "Gerar"}
+              {mutation.isPending ? "Escrevendo..." : "Escrever"}
             </Button>
           </Card>
 
           {/* Results */}
           <div className="space-y-4">
             {(blocked || limitHit) && !mutation.isPending ? (
-              <Card className="border-primary/40 bg-brand-soft p-6 text-center">
+              <Card className="border-primary/40 bg-primary/10 p-6 text-center">
                 <AlertCircle className="mx-auto mb-3 h-8 w-8 text-primary" />
-                <h3 className="text-lg font-bold">Você atingiu o limite diário</h3>
+                <h3 className="text-lg font-bold">Acabaram as cinco de hoje</h3>
                 <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-                  O plano gratuito inclui 5 gerações por dia. Faça upgrade para o Pro e gere sem
-                  limites, com prioridade e todos os tons.
+                  O plano grátis recarrega amanhã. O Pro solta o limite e libera os tons trancados.
                 </p>
-                <Button asChild className="mt-5 gap-2 bg-brand text-primary-foreground hover:opacity-90">
+                <Button
+                  asChild
+                  className="mt-5 gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
+                >
                   <Link to="/upgrade">
                     <Crown className="h-4 w-4" /> Fazer upgrade para o Pro
                   </Link>
@@ -290,21 +287,20 @@ function GeneratePage() {
                   <Button
                     variant={favorited ? "default" : "secondary"}
                     size="sm"
-                    className={`gap-1.5 ${favorited ? "bg-brand text-primary-foreground" : ""}`}
+                    className={`gap-1.5 ${favorited ? "bg-primary text-primary-foreground" : ""}`}
                     onClick={handleFavorite}
                   >
                     <Star className={`h-4 w-4 ${favorited ? "fill-current" : ""}`} />
-                    {favorited ? "Favoritado" : "Favoritar geração"}
+                    {favorited ? "Salvo" : "Salvar"}
                   </Button>
                 </div>
                 <ResultCards result={result} />
               </>
             ) : (
               <Card className="grid place-items-center border-dashed border-border/70 bg-card/40 p-12 text-center">
-                <Sparkles className="mb-3 h-10 w-10 text-muted-foreground/50" />
+                <Wand2 className="mb-3 h-10 w-10 text-muted-foreground/50" />
                 <p className="text-sm text-muted-foreground">
-                  Preencha o tema do vídeo e clique em <strong>Gerar</strong> para ver os resultados
-                  aqui.
+                  Escreve o tema do vídeo ali do lado. O resultado aparece aqui.
                 </p>
               </Card>
             )}

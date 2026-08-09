@@ -46,59 +46,75 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-body);
 }
 
-/* Dark by default — social-media vibe: violet / pink / orange accents */
+/*
+ * Paleta editorial. Fonte unica de verdade das cores da marca.
+ *
+ * Nomes semanticos pedidos na direcao de arte, mapeados para os tokens que o
+ * shadcn ja consome, para nao existirem dois sistemas de token em paralelo:
+ *
+ *   --color-bg      -> --background
+ *   --color-fg      -> --foreground
+ *   --color-accent  -> --primary   (acento da marca, o lima)
+ *   --color-muted   -> --muted-foreground
+ *
+ * Atencao: no vocabulario do shadcn, --accent nao e o acento da marca, e a
+ * superficie de hover. Por isso o lima vive em --primary.
+ *
+ * Nenhum componente deve escrever cor literal: sempre referenciar estes tokens.
+ */
 :root {
-  --radius: 0.9rem;
+  --radius: 0.5rem;
 
-  --background: oklch(0.16 0.02 285);
-  --foreground: oklch(0.97 0.005 285);
+  --background: #0a0a0a;
+  --foreground: #f5f5f0;
 
-  --card: oklch(0.2 0.022 285);
-  --card-foreground: oklch(0.97 0.005 285);
-  --popover: oklch(0.19 0.022 285);
-  --popover-foreground: oklch(0.97 0.005 285);
+  --card: #121211;
+  --card-foreground: #f5f5f0;
+  --popover: #121211;
+  --popover-foreground: #f5f5f0;
 
-  --primary: oklch(0.58 0.24 320);
-  --primary-foreground: oklch(0.99 0 0);
+  /* Acento da marca. */
+  --primary: #c6ff3d;
+  --primary-foreground: #0a0a0a;
 
-  --secondary: oklch(0.26 0.03 285);
-  --secondary-foreground: oklch(0.97 0.005 285);
+  --secondary: #1c1c1a;
+  --secondary-foreground: #f5f5f0;
 
-  --muted: oklch(0.24 0.025 285);
-  --muted-foreground: oklch(0.68 0.02 285);
+  --muted: #1c1c1a;
+  --muted-foreground: #8a8a85;
 
-  --accent: oklch(0.72 0.19 45);
-  --accent-foreground: oklch(0.16 0.02 285);
+  /* Superficie de hover do shadcn, nao o acento da marca. */
+  --accent: #1c1c1a;
+  --accent-foreground: #f5f5f0;
 
-  --destructive: oklch(0.63 0.24 25);
-  --destructive-foreground: oklch(0.99 0 0);
+  --destructive: #e5484d;
+  --destructive-foreground: #f5f5f0;
 
-  --border: oklch(0.3 0.025 285);
-  --input: oklch(0.28 0.025 285);
-  --ring: oklch(0.58 0.24 320);
+  --border: #2a2a27;
+  --input: #2a2a27;
+  --ring: #c6ff3d;
 
-  --chart-1: oklch(0.68 0.24 320);
-  --chart-2: oklch(0.7 0.2 260);
-  --chart-3: oklch(0.72 0.19 45);
-  --chart-4: oklch(0.7 0.18 160);
-  --chart-5: oklch(0.75 0.2 90);
+  --chart-1: #c6ff3d;
+  --chart-2: #f5f5f0;
+  --chart-3: #8a8a85;
+  --chart-4: #e8b93d;
+  --chart-5: #5c8a3d;
 
-  --sidebar: oklch(0.18 0.02 285);
-  --sidebar-foreground: oklch(0.97 0.005 285);
-  --sidebar-primary: oklch(0.58 0.24 320);
-  --sidebar-primary-foreground: oklch(0.99 0 0);
-  --sidebar-accent: oklch(0.26 0.03 285);
-  --sidebar-accent-foreground: oklch(0.97 0.005 285);
-  --sidebar-border: oklch(0.3 0.025 285);
-  --sidebar-ring: oklch(0.58 0.24 320);
+  --sidebar: #0f0f0e;
+  --sidebar-foreground: #f5f5f0;
+  --sidebar-primary: #c6ff3d;
+  --sidebar-primary-foreground: #0a0a0a;
+  --sidebar-accent: #1c1c1a;
+  --sidebar-accent-foreground: #f5f5f0;
+  --sidebar-border: #2a2a27;
+  --sidebar-ring: #c6ff3d;
 
-  /* Brand gradient */
-  --gradient-brand: linear-gradient(135deg, oklch(0.58 0.22 300), oklch(0.58 0.24 350), oklch(0.58 0.2 40));
-  --gradient-brand-soft: linear-gradient(135deg, oklch(0.7 0.22 300 / 0.16), oklch(0.74 0.2 40 / 0.12));
-  --shadow-glow: 0 0 40px -8px oklch(0.68 0.24 320 / 0.5);
+  /* Tipografia: display nos titulos, corpo neutro no texto corrido. */
+  --font-body: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
 }
 
 .dark {
@@ -115,26 +131,22 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
-    font-family: var(--font-sans);
+    font-family: var(--font-body);
     -webkit-font-smoothing: antialiased;
+  }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
   }
 }
 
-@utility text-gradient {
-  background: var(--gradient-brand);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+@utility font-display {
+  font-family: var(--font-display);
 }
 
-@utility bg-brand {
-  background: var(--gradient-brand);
-}
-
-@utility bg-brand-soft {
-  background: var(--gradient-brand-soft);
-}
-
-@utility shadow-glow {
-  box-shadow: var(--shadow-glow);
+/* Regua fina usada como separador de secao no lugar de cartoes empilhados. */
+@utility rule-accent {
+  border-top: 2px solid var(--color-primary);
 }

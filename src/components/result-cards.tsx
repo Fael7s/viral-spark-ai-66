@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Copy, Check, Star, RefreshCw } from "lucide-react";
+import { Copy, Check, RefreshCw, Anchor, AlignLeft, Smile, Hash } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,10 +19,10 @@ function CopyButton({ text, label }: { text: string; label?: string }) {
         try {
           await navigator.clipboard.writeText(text);
           setCopied(true);
-          toast.success("Copiado!");
+          toast.success("Copiado.");
           setTimeout(() => setCopied(false), 1500);
         } catch {
-          toast.error("Não foi possível copiar.");
+          toast.error("Não deu para copiar.");
         }
       }}
     >
@@ -33,12 +34,12 @@ function CopyButton({ text, label }: { text: string; label?: string }) {
 
 function CardShell({
   title,
-  emoji,
+  icon: Icon,
   children,
   copyAll,
 }: {
   title: string;
-  emoji: string;
+  icon: LucideIcon;
   children: React.ReactNode;
   copyAll?: string;
 }) {
@@ -46,7 +47,7 @@ function CardShell({
     <Card className="flex flex-col gap-3 border-border/70 bg-card/80 p-4">
       <div className="flex items-center justify-between">
         <h3 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-muted-foreground">
-          <span className="text-base">{emoji}</span> {title}
+          <Icon className="h-4 w-4 text-primary" aria-hidden /> {title}
         </h3>
         {copyAll ? <CopyButton text={copyAll} label="Copiar tudo" /> : null}
       </div>
@@ -98,7 +99,7 @@ export function ResultCards({
       <Card className="flex flex-col gap-3 border-border/70 bg-card/80 p-4">
         <div className="flex items-center justify-between">
           <h3 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-muted-foreground">
-            <span className="text-base">🎣</span> Hooks
+            <Anchor className="h-4 w-4 text-primary" aria-hidden /> Hooks
           </h3>
           {regenBtn("hooks")}
         </div>
@@ -118,7 +119,7 @@ export function ResultCards({
       <Card className="flex flex-col gap-3 border-border/70 bg-card/80 p-4">
         <div className="flex items-center justify-between">
           <h3 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-muted-foreground">
-            <span className="text-base">📝</span> Legendas
+            <AlignLeft className="h-4 w-4 text-primary" aria-hidden /> Legendas
           </h3>
           {regenBtn("captions")}
         </div>
@@ -135,7 +136,7 @@ export function ResultCards({
         </ul>
       </Card>
 
-      <CardShell title="Emojis" emoji="✨" copyAll={result.emojis.join(" ")}>
+      <CardShell title="Emojis" icon={Smile} copyAll={result.emojis.join(" ")}>
         <div className="flex flex-wrap gap-2 text-2xl">
           {result.emojis.map((e, i) => (
             <button
@@ -143,7 +144,7 @@ export function ResultCards({
               className="rounded-lg bg-secondary/50 px-2 py-1 transition-transform hover:scale-110"
               onClick={() => {
                 navigator.clipboard.writeText(e);
-                toast.success("Emoji copiado!");
+                toast.success("Emoji copiado.");
               }}
             >
               {e}
@@ -153,7 +154,7 @@ export function ResultCards({
         <div className="mt-1 flex justify-end">{regenBtn("emojis")}</div>
       </CardShell>
 
-      <CardShell title="Hashtags" emoji="#️⃣" copyAll={result.hashtags.join(" ")}>
+      <CardShell title="Hashtags" icon={Hash} copyAll={result.hashtags.join(" ")}>
         <div className="flex flex-wrap gap-2">
           {result.hashtags.map((h, i) => (
             <Badge
@@ -162,7 +163,7 @@ export function ResultCards({
               className="cursor-pointer text-sm hover:bg-primary/20"
               onClick={() => {
                 navigator.clipboard.writeText(h);
-                toast.success("Hashtag copiada!");
+                toast.success("Hashtag copiada.");
               }}
             >
               {h}

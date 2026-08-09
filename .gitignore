@@ -44,3 +44,12 @@ dist-ssr
 .env
 .env.local
 .env.*.local
+# Cobre novos arquivos de ambiente (.env.production, .env.staging, ...).
+# O .env.example continua versionado de proposito, como modelo.
+.env.*
+!.env.example
+
+# Documentacao gerada pelo Lovable para agentes. Nao participa do build, entao
+# deixou de ser versionada. O arquivo continua no disco e o Lovable pode
+# reescreve-lo a vontade sem sujar o historico.
+AGENTS.md
