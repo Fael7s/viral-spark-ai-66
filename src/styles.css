@@ -113,8 +113,8 @@
   --sidebar-ring: #c6ff3d;
 
   /* Tipografia: display nos titulos, corpo neutro no texto corrido. */
-  --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Space Grotesk", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
 }
 
 .dark {
