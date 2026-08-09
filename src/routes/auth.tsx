@@ -74,9 +74,8 @@ function AuthPage() {
           toast.success("Verifique seu e-mail para ativar sua conta.");
           return;
         }
-        toast.success("Conta criada! Você já pode gerar legendas.");
+        toast.success("Conta criada. Pode mandar o primeiro tema.");
       } else {
-
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
       }
@@ -111,12 +110,6 @@ function AuthPage() {
 
   return (
     <div className="grid min-h-screen place-items-center px-4">
-      <div
-        className="pointer-events-none absolute inset-0 -z-10 opacity-30"
-        style={{
-          background: "radial-gradient(50% 40% at 50% 0%, oklch(0.68 0.24 320 / 0.35), transparent)",
-        }}
-      />
       <div className="w-full max-w-sm">
         <div className="mb-6 flex justify-center">
           <Logo className="text-xl" />
@@ -127,13 +120,14 @@ function AuthPage() {
           </h1>
           <p className="mt-1 text-center text-sm text-muted-foreground">
             {mode === "login"
-              ? "Bem-vindo de volta ao ViralCaption"
-              : "Comece grátis com 5 gerações por dia"}
+              ? "Bom te ver de volta"
+              : "Cinco gerações por dia, sem cartão de crédito"}
           </p>
 
           {referralCode && mode === "signup" ? (
-            <div className="mt-4 rounded-md border border-primary/40 bg-brand-soft px-3 py-2 text-center text-xs text-foreground">
-              Você foi indicado com o código <strong>{referralCode}</strong>. Seu convidador ganha 5 gerações extras hoje.
+            <div className="mt-4 rounded-md border border-primary/40 bg-primary/10 px-3 py-2 text-center text-xs text-foreground">
+              Você foi indicado com o código <strong>{referralCode}</strong>. Seu convidador ganha 5
+              gerações extras hoje.
             </div>
           ) : null}
 
@@ -175,7 +169,7 @@ function AuthPage() {
             </div>
             <Button
               type="submit"
-              className="w-full bg-brand text-primary-foreground hover:opacity-90"
+              className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
               disabled={loading}
             >
               {loading ? "Aguarde..." : mode === "login" ? "Entrar" : "Criar conta"}

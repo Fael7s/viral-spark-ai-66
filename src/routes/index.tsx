@@ -1,19 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import {
-  Sparkles,
-  Zap,
-  Star,
-  ArrowRight,
-  Check,
-  TrendingUp,
-  Clock,
-  Hash,
-  Mail,
-} from "lucide-react";
+import { ArrowRight, Check, Mail } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
+import { ExamplePair, ExampleSwitcher, PhoneMockup } from "@/components/showcase";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { HERO_EXAMPLES, NICHE_EXAMPLES } from "@/lib/examples";
 import { VENDOR } from "@/lib/vendor";
 
 export const Route = createFileRoute("/")({
@@ -25,182 +17,175 @@ function Landing() {
     <div className="min-h-screen">
       <SiteHeader />
 
-      {/* Hero */}
-      <section className="relative overflow-hidden px-4 pb-20 pt-16 sm:pt-24">
-        <div
-          className="pointer-events-none absolute inset-0 -z-10 opacity-40"
-          style={{
-            background:
-              "radial-gradient(60% 50% at 50% 0%, oklch(0.68 0.24 320 / 0.35), transparent 70%)",
-          }}
-        />
-        <div className="mx-auto max-w-3xl text-center">
-          <Badge
-            variant="secondary"
-            className="mb-5 gap-1.5 border-primary/30 bg-primary/10 py-1.5 text-primary"
-          >
-            <Sparkles className="h-3.5 w-3.5" /> Legendas virais com IA
-          </Badge>
-          <h1 className="text-balance text-4xl font-extrabold leading-tight sm:text-6xl">
-            Escreva menos.
-            <br />
-            <span className="text-gradient">Viralize mais.</span>
-          </h1>
-          <p className="mx-auto mt-5 max-w-xl text-pretty text-lg text-muted-foreground">
-            Descreva seu vídeo e receba em segundos hooks que prendem nos primeiros 3s, legendas
-            otimizadas, emojis e hashtags — para TikTok, Reels e Shorts.
-          </p>
-          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Button
-              asChild
-              size="lg"
-              className="w-full gap-2 bg-brand text-primary-foreground hover:opacity-90 sm:w-auto"
-            >
-              <Link to="/auth">
-                Gerar minha primeira legenda <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
-            <span className="text-sm text-muted-foreground">Grátis • 5 gerações por dia</span>
+      {/* Hero: copy a esquerda, exemplos do produto a direita. */}
+      <section className="border-b border-border">
+        <div className="mx-auto grid max-w-6xl gap-12 px-4 pb-16 pt-14 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-16 lg:pb-24 lg:pt-20">
+          <div className="max-w-xl">
+            <h1 className="text-balance text-4xl font-bold leading-[1.05] sm:text-5xl">
+              O gancho que segura nos 3 primeiros segundos.
+            </h1>
+            <p className="mt-6 text-pretty text-lg leading-relaxed text-muted-foreground">
+              Você descreve o vídeo. Sai o gancho, a legenda e as hashtags prontos para colar no
+              TikTok, no Reels e no Shorts.
+            </p>
+
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+              <Button
+                asChild
+                size="lg"
+                className="w-full gap-2 bg-primary text-primary-foreground hover:bg-primary/90 sm:w-auto"
+              >
+                <Link to="/auth">
+                  Criar minha conta <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+              <span className="text-sm text-muted-foreground">
+                Sem cartão de crédito, sem pegadinha
+              </span>
+            </div>
+
+            <ul className="mt-10 space-y-3 border-t border-border pt-6 text-sm text-muted-foreground">
+              <li>Gancho, legenda, emoji e hashtag saem juntos, na mesma tela.</li>
+              <li>Hashtag que não flopa: mistura de nicho com alcance, não só as genéricas.</li>
+              <li>O que funcionou você favorita e reusa na semana seguinte.</li>
+            </ul>
+          </div>
+
+          <div className="lg:pt-2">
+            <ExampleSwitcher examples={HERO_EXAMPLES} />
           </div>
         </div>
       </section>
 
-      {/* How it works */}
-      <section className="mx-auto max-w-5xl px-4 py-16">
-        <h2 className="text-center text-3xl font-bold">Como funciona</h2>
-        <div className="mt-10 grid gap-6 md:grid-cols-3">
-          {[
-            {
-              icon: Zap,
-              title: "1. Descreva",
-              text: "Digite o tema do vídeo ou cole seu roteiro e escolha a plataforma e o tom.",
-            },
-            {
-              icon: Sparkles,
-              title: "2. Gere",
-              text: "A IA cria hooks, legendas, emojis e hashtags adaptados a cada rede.",
-            },
-            {
-              icon: TrendingUp,
-              title: "3. Publique",
-              text: "Copie com um clique, favorite os melhores e publique para engajar.",
-            },
-          ].map((s) => (
-            <Card key={s.title} className="border-border/70 bg-card/60 p-6">
-              <div className="mb-4 grid h-11 w-11 place-items-center rounded-xl bg-brand-soft">
-                <s.icon className="h-5 w-5 text-primary" />
-              </div>
-              <h3 className="text-lg font-semibold">{s.title}</h3>
-              <p className="mt-2 text-sm text-muted-foreground">{s.text}</p>
-            </Card>
-          ))}
-        </div>
-      </section>
+      {/* A tela de geração, no lugar dos cartões numerados de "como funciona". */}
+      <section className="border-b border-border">
+        <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-16 lg:grid-cols-2 lg:py-24">
+          <div className="max-w-md">
+            <h2 className="text-3xl font-bold leading-tight">É uma tela só</h2>
+            <p className="mt-5 leading-relaxed text-muted-foreground">
+              Escolhe a rede, escolhe o tom, escreve o tema do vídeo. Se tiver o roteiro, cola junto
+              — o resultado fica mais perto do que você ia falar mesmo.
+            </p>
+            <p className="mt-4 leading-relaxed text-muted-foreground">
+              O que volta já vem separado por tipo, com botão de copiar em cada bloco. Nada de
+              exportar, formatar ou limpar antes de postar.
+            </p>
+            <Button asChild variant="secondary" className="mt-7 gap-2">
+              <Link to="/auth">
+                Ver a tela por dentro <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
 
-      {/* Feature strip */}
-      <section className="mx-auto max-w-5xl px-4 pb-4">
-        <div className="grid gap-4 sm:grid-cols-3">
-          {[
-            { icon: Clock, label: "Resultados em segundos" },
-            { icon: Hash, label: "Hashtags de nicho + genéricas" },
-            { icon: Star, label: "Salve seus favoritos" },
-          ].map((f) => (
-            <div
-              key={f.label}
-              className="flex items-center gap-3 rounded-xl border border-border/60 bg-card/40 p-4 text-sm"
-            >
-              <f.icon className="h-5 w-5 text-primary" />
-              {f.label}
+          <PhoneMockup>
+            {/* TODO: substituir por screenshot real */}
+            <div className="flex h-full flex-col items-center justify-center gap-3 px-6 text-center">
+              <span className="rounded-sm border border-dashed border-border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                Placeholder
+              </span>
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                Screenshot da tela de geração entra aqui.
+              </p>
             </div>
-          ))}
+          </PhoneMockup>
         </div>
       </section>
 
-      {/* Pricing */}
-      <section className="mx-auto max-w-4xl px-4 py-16">
-        <h2 className="text-center text-3xl font-bold">Planos</h2>
-        <p className="mt-2 text-center text-muted-foreground">
-          Comece grátis, evolua quando quiser.
-        </p>
-        <div className="mt-10 grid gap-6 md:grid-cols-2">
-          <Card className="border-border/70 bg-card/60 p-7">
-            <h3 className="text-xl font-bold">Free</h3>
-            <p className="mt-1 text-sm text-muted-foreground">Para começar a testar</p>
-            <p className="mt-4 text-4xl font-extrabold">
-              R$0<span className="text-base font-normal text-muted-foreground">/mês</span>
-            </p>
-            <ul className="mt-6 space-y-3 text-sm">
-              {["5 gerações por dia", "4 tons de conteúdo", "Histórico e favoritos"].map((f) => (
-                <li key={f} className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-primary" /> {f}
-                </li>
-              ))}
-            </ul>
-            <Button asChild variant="secondary" className="mt-7 w-full">
-              <Link to="/auth">Começar grátis</Link>
-            </Button>
-          </Card>
-
-          <Card className="relative border-primary/50 bg-card/80 p-7 shadow-glow">
-            <Badge className="absolute -top-3 left-7 bg-brand text-primary-foreground">
-              Mais popular
-            </Badge>
-            <h3 className="text-xl font-bold">Pro</h3>
-            <p className="mt-1 text-sm text-muted-foreground">Para criadores em ritmo acelerado</p>
-            <p className="mt-4 text-4xl font-extrabold">
-              R$29,90<span className="text-base font-normal text-muted-foreground">/mês</span>
-            </p>
-            <ul className="mt-6 space-y-3 text-sm">
-              {[
-                "Gerações ilimitadas",
-                "Todos os tons e estilos",
-                "Prioridade na fila de geração",
-                "Histórico e favoritos ilimitados",
-              ].map((f) => (
-                <li key={f} className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-primary" /> {f}
-                </li>
-              ))}
-            </ul>
-            <Button
-              asChild
-              className="mt-7 w-full bg-brand text-primary-foreground hover:opacity-90"
-            >
-              <Link to="/auth">Assinar o Pro</Link>
-            </Button>
-            <p className="mt-3 text-center text-xs text-muted-foreground">Crie sua conta e finalize a assinatura no próximo passo</p>
-          </Card>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="px-4 pb-24 pt-16">
-        <Card className="mx-auto max-w-3xl overflow-hidden border-primary/40 bg-brand-soft p-10 text-center">
-          <h2 className="text-3xl font-bold">Pronto para viralizar?</h2>
-          <p className="mx-auto mt-3 max-w-md text-muted-foreground">
-            Crie sua conta gratuita e gere suas primeiras legendas agora mesmo.
+      {/* Exemplos por nicho. */}
+      <section className="border-b border-border">
+        <div className="mx-auto max-w-5xl px-4 py-16 lg:py-24">
+          <h2 className="text-3xl font-bold">Como fica em cada nicho</h2>
+          <p className="mt-4 max-w-lg text-muted-foreground">
+            Três exemplos escritos para esta página. Não são resultados de clientes e não foram
+            gerados agora — servem para você ver o formato antes de criar conta.
           </p>
-          <Button
-            asChild
-            size="lg"
-            className="mt-6 gap-2 bg-brand text-primary-foreground hover:opacity-90"
-          >
-            <Link to="/auth">
-              Começar agora <ArrowRight className="h-4 w-4" />
-            </Link>
-          </Button>
-        </Card>
+
+          <div className="mt-12 space-y-12">
+            {NICHE_EXAMPLES.map((example) => (
+              <ExamplePair key={example.id} example={example} />
+            ))}
+          </div>
+        </div>
       </section>
 
-      {/* Contato */}
-      <section className="mx-auto max-w-3xl px-4 pb-20">
-        <h2 className="text-center text-3xl font-bold">Contato</h2>
-        <p className="mt-3 text-center text-muted-foreground">
-          Dúvidas, suporte, cancelamento ou reembolso: fale direto por e-mail. Respondemos pelo
-          mesmo endereço.
-        </p>
-        <div className="mt-6 flex justify-center">
-          <Button asChild variant="secondary" size="lg" className="gap-2">
+      {/* Pricing: valores e itens de plano inalterados, só a apresentação mudou. */}
+      <section className="border-b border-border">
+        <div className="mx-auto max-w-4xl px-4 py-16 lg:py-24">
+          <h2 className="text-3xl font-bold">Planos</h2>
+          <p className="mt-4 text-muted-foreground">
+            Começa de graça. Se travar no limite diário, aí sim vale pagar.
+          </p>
+
+          <div className="mt-12 grid gap-6 md:grid-cols-2">
+            <Card className="border-border bg-card p-7">
+              <h3 className="text-xl font-bold">Free</h3>
+              <p className="mt-1 text-sm text-muted-foreground">Para começar a testar</p>
+              <p className="mt-5 text-4xl font-bold">
+                R$0<span className="text-base font-normal text-muted-foreground">/mês</span>
+              </p>
+              <ul className="mt-7 space-y-3 text-sm">
+                {["5 gerações por dia", "4 tons de conteúdo", "Histórico e favoritos"].map((f) => (
+                  <li key={f} className="flex items-center gap-2.5">
+                    <Check className="h-4 w-4 shrink-0 text-primary" /> {f}
+                  </li>
+                ))}
+              </ul>
+              <Button asChild variant="secondary" className="mt-8 w-full">
+                <Link to="/auth">Criar conta grátis</Link>
+              </Button>
+            </Card>
+
+            <Card className="relative border-primary bg-card p-7">
+              <Badge className="absolute -top-3 left-7 rounded-sm bg-primary text-primary-foreground">
+                Mais popular
+              </Badge>
+              <h3 className="text-xl font-bold">Pro</h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Para criadores em ritmo acelerado
+              </p>
+              <p className="mt-5 text-4xl font-bold">
+                R$29,90<span className="text-base font-normal text-muted-foreground">/mês</span>
+              </p>
+              <ul className="mt-7 space-y-3 text-sm">
+                {[
+                  "Gerações ilimitadas",
+                  "Todos os tons e estilos",
+                  "Prioridade na fila de geração",
+                  "Histórico e favoritos ilimitados",
+                ].map((f) => (
+                  <li key={f} className="flex items-center gap-2.5">
+                    <Check className="h-4 w-4 shrink-0 text-primary" /> {f}
+                  </li>
+                ))}
+              </ul>
+              <Button
+                asChild
+                className="mt-8 w-full bg-primary text-primary-foreground hover:bg-primary/90"
+              >
+                <Link to="/auth">Assinar o Pro</Link>
+              </Button>
+              <p className="mt-3 text-center text-xs text-muted-foreground">
+                Cria a conta primeiro, a assinatura fecha no passo seguinte
+              </p>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* Sobre: sem depoimento, sem número inventado, sem foto. */}
+      <section className="border-b border-border">
+        <div className="mx-auto max-w-2xl px-4 py-16 lg:py-24">
+          <h2 className="text-3xl font-bold">Quem faz isso aqui</h2>
+          <p className="mt-6 leading-relaxed text-muted-foreground">
+            O ViralCaption é tocado por um desenvolvedor solo. Sem equipe, sem venture capital, sem
+            escritório. O produto é novo e não tem base de clientes para exibir aqui — por isso você
+            não vai encontrar depoimento nem contador de usuários nesta página.
+          </p>
+          <p className="mt-4 leading-relaxed text-muted-foreground">
+            Se você mandar um e-mail, quem lê e responde é a mesma pessoa que escreveu o código.
+            Suporte, cancelamento e reembolso saem todos por esse endereço.
+          </p>
+          <Button asChild variant="secondary" className="mt-7 gap-2">
             <a href={`mailto:${VENDOR.emailSuporte}`}>
               <Mail className="h-4 w-4" />
               {VENDOR.emailSuporte}
@@ -209,8 +194,26 @@ function Landing() {
         </div>
       </section>
 
-      <footer className="border-t border-border/60 py-10 text-center text-sm text-muted-foreground">
-        <p>© {new Date().getFullYear()} ViralCaption. Feito para criadores.</p>
+      {/* Fechamento. */}
+      <section className="mx-auto max-w-4xl px-4 py-20 text-center">
+        <h2 className="text-3xl font-bold">Testa com o próximo vídeo que você for postar</h2>
+        <p className="mx-auto mt-5 max-w-md text-muted-foreground">
+          São cinco gerações por dia no plano grátis. Dá para saber se serve antes de gastar
+          qualquer coisa.
+        </p>
+        <Button
+          asChild
+          size="lg"
+          className="mt-8 gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
+        >
+          <Link to="/auth">
+            Criar minha conta <ArrowRight className="h-4 w-4" />
+          </Link>
+        </Button>
+      </section>
+
+      <footer className="border-t border-border py-10 text-center text-sm text-muted-foreground">
+        <p>© {new Date().getFullYear()} ViralCaption</p>
         <p className="mt-3">
           {VENDOR.nome} — CPF {VENDOR.cpf}
         </p>

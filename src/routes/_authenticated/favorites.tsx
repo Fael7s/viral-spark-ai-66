@@ -35,10 +35,10 @@ function FavoritesPage() {
           <Card className="grid place-items-center border-dashed border-border/70 bg-card/40 p-12 text-center">
             <Star className="mb-3 h-10 w-10 text-muted-foreground/50" />
             <p className="text-sm text-muted-foreground">
-              Você ainda não favoritou nenhuma geração. Clique na estrela ⭐ para salvar as melhores.
+              Nenhum favorito ainda. Toca na estrela para guardar o que funcionou.
             </p>
-            <Button asChild className="mt-4 bg-brand text-primary-foreground hover:opacity-90">
-              <Link to="/app">Gerar conteúdo</Link>
+            <Button asChild className="mt-4 bg-primary text-primary-foreground hover:bg-primary/90">
+              <Link to="/app">Escrever agora</Link>
             </Button>
           </Card>
         )}

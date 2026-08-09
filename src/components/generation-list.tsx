@@ -36,10 +36,10 @@ export function GenerationList({
     try {
       await toggleFavorite(user.id, id, on);
       queryClient.invalidateQueries({ queryKey: ["favorites"] });
-      toast.success(on ? "Adicionado aos favoritos!" : "Removido dos favoritos.");
+      toast.success(on ? "Salvo nos favoritos." : "Tirado dos favoritos.");
     } catch {
       setFavs(favs);
-      toast.error("Não foi possível atualizar o favorito.");
+      toast.error("Não deu para salvar. Tenta de novo.");
     }
   };
 

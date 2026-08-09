@@ -8,7 +8,6 @@ function sanitizeUserInput(input: string): string {
     .slice(0, 5000);
 }
 
-
 const PLATFORM_RULES: Record<Platform, string> = {
   tiktok:
     "TikTok: tom direto, jovem e com gírias atuais do Brasil. Legendas curtas (até ~150 caracteres). Ganchos rápidos e coloquiais.",
@@ -60,7 +59,9 @@ export function buildMessages(params: {
     "Gere conteúdo para o seguinte vídeo.",
     "<input_usuario>",
     `TEMA/NICHO: ${sanitizeUserInput(topic)}`,
-    transcript ? `TRANSCRICAO/ROTEIRO: ${sanitizeUserInput(transcript)}` : "TRANSCRICAO/ROTEIRO: (não fornecida)",
+    transcript
+      ? `TRANSCRICAO/ROTEIRO: ${sanitizeUserInput(transcript)}`
+      : "TRANSCRICAO/ROTEIRO: (não fornecida)",
     "</input_usuario>",
   ].join("\n");
 
@@ -84,10 +85,26 @@ export async function callAiGateway(
       parameters: {
         type: "object",
         properties: {
-          hooks: { type: "array", items: { type: "string" }, description: "3 a 5 ganchos de abertura" },
-          captions: { type: "array", items: { type: "string" }, description: "3 a 5 legendas completas" },
-          emojis: { type: "array", items: { type: "string" }, description: "6 a 12 emojis contextuais" },
-          hashtags: { type: "array", items: { type: "string" }, description: "3 a 8 hashtags com #" },
+          hooks: {
+            type: "array",
+            items: { type: "string" },
+            description: "3 a 5 ganchos de abertura",
+          },
+          captions: {
+            type: "array",
+            items: { type: "string" },
+            description: "3 a 5 legendas completas",
+          },
+          emojis: {
+            type: "array",
+            items: { type: "string" },
+            description: "6 a 12 emojis contextuais",
+          },
+          hashtags: {
+            type: "array",
+            items: { type: "string" },
+            description: "3 a 8 hashtags com #",
+          },
         },
         required: ["hooks", "captions", "emojis", "hashtags"],
         additionalProperties: false,
@@ -162,15 +179,19 @@ export async function callAiGateway(
   return validated.data;
 }
 
+/**
+ * Texto exibido ao usuario para cada codigo de erro. So copy: as chaves e o
+ * significado de cada uma continuam definidos onde o erro e lancado.
+ */
 export const ERROR_MESSAGES: Record<string, string> = {
-  AI_RATE_LIMIT: "Muitas requisições no momento. Tente novamente em alguns segundos.",
-  AI_CREDITS: "O serviço de IA está temporariamente indisponível. Tente mais tarde.",
-  AI_ERROR: "Falha ao gerar conteúdo. Tente novamente.",
-  AI_BAD_OUTPUT: "A IA retornou um formato inesperado. Tente gerar novamente.",
-  AI_TIMEOUT: "A geração demorou muito. Tente novamente em instantes.",
-  AI_KEY_MISSING: "Configuração de IA ausente. Contate o suporte.",
-  LIMIT_REACHED: "Você atingiu o limite diário de gerações do plano gratuito.",
-  TONE_REQUIRES_PRO: "Este tom é exclusivo do plano Pro. Faça upgrade para utilizá-lo.",
-  RATE_LIMIT: "Muitas requisições. Aguarde um minuto antes de tentar novamente.",
-  BILLING_CONFIG_ERROR: "Não foi possível iniciar o checkout. Tente novamente em instantes.",
+  AI_RATE_LIMIT: "Muita gente escrevendo ao mesmo tempo. Tenta de novo em alguns segundos.",
+  AI_CREDITS: "O serviço está fora do ar por enquanto. Tenta mais tarde.",
+  AI_ERROR: "Não deu para escrever agora. Tenta de novo.",
+  AI_BAD_OUTPUT: "O resultado voltou quebrado. Manda gerar de novo.",
+  AI_TIMEOUT: "Demorou demais e a gente cortou. Tenta de novo.",
+  AI_KEY_MISSING: "Falta configuração do nosso lado. Fala com o suporte.",
+  LIMIT_REACHED: "Você bateu o limite diário do plano grátis. Recarrega amanhã.",
+  TONE_REQUIRES_PRO: "Esse tom é do plano Pro. Passa para o Pro para usar.",
+  RATE_LIMIT: "Calma aí. Espera um minuto antes de tentar de novo.",
+  BILLING_CONFIG_ERROR: "Não deu para abrir o checkout. Tenta de novo em instantes.",
 };
