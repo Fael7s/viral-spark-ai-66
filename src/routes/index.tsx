@@ -148,7 +148,7 @@ function Landing() {
               </p>
               <ul className="mt-7 space-y-3 text-sm">
                 {[
-                  "Gerações ilimitadas",
+                  "500 gerações por dia",
                   "Todos os tons e estilos",
                   "Prioridade na fila de geração",
                   "Histórico e favoritos ilimitados",
