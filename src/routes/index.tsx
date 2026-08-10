@@ -151,7 +151,7 @@ function Landing() {
                   "500 gerações por dia",
                   "Todos os tons e estilos",
                   "Prioridade na fila de geração",
-                  "Histórico dos 100 mais recentes, favoritos sem limite",
+                  "Histórico completo das suas gerações, favoritos sem limite",
                 ].map((f) => (
                   <li key={f} className="flex items-center gap-2.5">
                     <Check className="h-4 w-4 shrink-0 text-primary" /> {f}

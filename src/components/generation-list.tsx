@@ -15,14 +15,20 @@ import { PLATFORMS, TONES, type GenerationRecord } from "@/lib/types";
 export function GenerationList({
   items,
   favoriteIds,
+  autoOpenFirst = true,
 }: {
   items: GenerationRecord[];
   favoriteIds: Set<string>;
+  /** Abre o primeiro item apenas na primeira pagina carregada. */
+  autoOpenFirst?: boolean;
 }) {
-  const [open, setOpen] = useState<string | null>(items[0]?.id ?? null);
+  const [open, setOpen] = useState<string | null>(
+    autoOpenFirst ? (items[0]?.id ?? null) : null,
+  );
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [favs, setFavs] = useState(favoriteIds);
+
 
   const platformLabel = (v: string) => PLATFORMS.find((p) => p.value === v)?.label ?? v;
   const toneLabel = (v: string) => TONES.find((t) => t.value === v)?.label ?? v;

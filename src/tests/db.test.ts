@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { fetchUsage, toggleFavorite, fetchHistory, fetchFavorites } from "@/lib/db";
+import { fetchUsage, toggleFavorite, fetchHistory, fetchFavorites, HISTORY_PAGE_SIZE } from "@/lib/db";
 import { FREE_DAILY_LIMIT, PRO_DAILY_LIMIT } from "@/lib/types";
 
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { from: vi.fn() } }));
@@ -66,15 +66,40 @@ describe("Banco de Dados", () => {
     await expect(toggleFavorite("u", "g", true)).resolves.not.toThrow();
   });
 
-  it("historico ordenado", async () => {
+  it("historico ordenado com desempate estavel", async () => {
     const data = [
       { id: "g1", platform: "tiktok", tone: "engracado", input_topic: "T1", input_transcript: null, result_hooks: ["H"], result_captions: ["C"], result_emojis: ["🔥"], result_hashtags: ["#t"], created_at: "2024-01-02T00:00:00Z" },
       { id: "g2", platform: "reels", tone: "luxo", input_topic: "T2", input_transcript: null, result_hooks: ["H"], result_captions: ["C"], result_emojis: ["✨"], result_hashtags: ["#t"], created_at: "2024-01-01T00:00:00Z" },
     ];
-    mockFrom.mockReturnValue({ select: vi.fn(() => ({ order: vi.fn(() => ({ limit: vi.fn(() => Promise.resolve({ data, error: null })) })) })) });
+    const limit = vi.fn(() => Promise.resolve({ data, error: null }));
+    const order2 = vi.fn(() => ({ limit }));
+    const order1 = vi.fn(() => ({ order: order2 }));
+    mockFrom.mockReturnValue({ select: vi.fn(() => ({ order: order1 })) });
     const h = await fetchHistory();
-    expect(h[0].id).toBe("g1"); expect(h[1].id).toBe("g2");
+    expect(order1).toHaveBeenCalledWith("created_at", { ascending: false });
+    expect(order2).toHaveBeenCalledWith("id", { ascending: false });
+    expect(h.items[0].id).toBe("g1"); expect(h.items[1].id).toBe("g2");
+    expect(h.nextCursor).toBeNull();
   });
+
+  it("keyset: aplica cursor e devolve proximo cursor quando pagina cheia", async () => {
+    const data = Array.from({ length: HISTORY_PAGE_SIZE }, (_, i) => ({
+      id: `g${i}`, platform: "tiktok", tone: "engracado", input_topic: `T${i}`, input_transcript: null,
+      result_hooks: ["H"], result_captions: ["C"], result_emojis: ["🔥"], result_hashtags: ["#t"],
+      created_at: "2024-01-01T00:00:00Z",
+    }));
+    const or = vi.fn(() => Promise.resolve({ data, error: null }));
+    const limit = vi.fn(() => ({ or }));
+    mockFrom.mockReturnValue({
+      select: vi.fn(() => ({ order: vi.fn(() => ({ order: vi.fn(() => ({ limit })) })) })),
+    });
+    const h = await fetchHistory({ created_at: "2024-01-05T00:00:00Z", id: "gx" });
+    expect(or).toHaveBeenCalledWith(
+      "created_at.lt.2024-01-05T00:00:00Z,and(created_at.eq.2024-01-05T00:00:00Z,id.lt.gx)",
+    );
+    expect(h.nextCursor).toEqual({ created_at: "2024-01-01T00:00:00Z", id: `g${HISTORY_PAGE_SIZE - 1}` });
+  });
+
 
   it("favoritos filtram geracoes deletadas", async () => {
     mockFrom.mockReturnValue({ select: vi.fn(() => ({ order: vi.fn(() => Promise.resolve({ data: [{ generations: { id: "g1", platform: "tiktok", tone: "engracado", input_topic: "T", input_transcript: null, result_hooks: ["H"], result_captions: ["C"], result_emojis: ["🔥"], result_hashtags: ["#t"], created_at: "2024-01-01T00:00:00Z" } }, { generations: null }], error: null })) })) });
