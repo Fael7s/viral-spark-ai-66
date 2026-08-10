@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { fetchUsage, toggleFavorite, fetchHistory, fetchFavorites } from "@/lib/db";
+import { fetchUsage, toggleFavorite, fetchHistory, fetchFavorites, HISTORY_PAGE_SIZE } from "@/lib/db";
 import { FREE_DAILY_LIMIT, PRO_DAILY_LIMIT } from "@/lib/types";
 
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { from: vi.fn() } }));
