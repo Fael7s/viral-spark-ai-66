@@ -27,7 +27,7 @@ const BENEFITS = [
   "500 gerações por dia (100x o plano gratuito)",
   "Todos os tons, incluindo Provocativo e Luxo",
   "Prioridade na geração de conteúdo",
-  "Histórico dos 100 mais recentes, favoritos sem limite",
+  "Histórico completo das suas gerações, favoritos sem limite",
 ];
 
 const PRICE_DISPLAY = import.meta.env.VITE_PRICE_DISPLAY ?? "R$ 29,90";
