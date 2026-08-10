@@ -36,15 +36,52 @@ function toRecord(r: GenerationRow): GenerationRecord {
   };
 }
 
-export async function fetchHistory(): Promise<GenerationRecord[]> {
-  const { data, error } = await db
+export const HISTORY_PAGE_SIZE = 20;
+
+export interface HistoryCursor {
+  created_at: string;
+  id: string;
+}
+
+export interface HistoryPage {
+  items: GenerationRecord[];
+  nextCursor: HistoryCursor | null;
+}
+
+/**
+ * Keyset (cursor) pagination: busca as proximas linhas a partir do ultimo
+ * item carregado, em vez de pular N linhas. Assim uma geracao nova entrando
+ * entre duas buscas nao gera duplicatas. Sem count: "exact" (custo de COUNT).
+ * O filtro por user_id vem da RLS e e aplicado antes do limit.
+ */
+export async function fetchHistory(cursor?: HistoryCursor | null): Promise<HistoryPage> {
+  let query = db
     .from("generations")
     .select("*")
     .order("created_at", { ascending: false })
-    .limit(100);
+    .order("id", { ascending: false })
+    .limit(HISTORY_PAGE_SIZE);
+
+  if (cursor) {
+    query = query.or(
+      `created_at.lt.${cursor.created_at},and(created_at.eq.${cursor.created_at},id.lt.${cursor.id})`,
+    );
+  }
+
+  const { data, error } = await query;
   if (error) throw error;
-  return (data as GenerationRow[]).map(toRecord);
+  const rows = (data ?? []) as GenerationRow[];
+  const items = rows.map(toRecord);
+  const last = rows[rows.length - 1];
+  return {
+    items,
+    nextCursor:
+      rows.length === HISTORY_PAGE_SIZE && last
+        ? { created_at: last.created_at, id: last.id }
+        : null,
+  };
 }
+
 
 export async function fetchFavorites(): Promise<GenerationRecord[]> {
   const { data, error } = await db
