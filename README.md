@@ -34,3 +34,5 @@ Eventos necessários:
 
 O handler valida o header `Stripe-Signature` com `STRIPE_WEBHOOK_SECRET`
 antes de processar qualquer evento.
+
+<!-- build pipeline test -->
