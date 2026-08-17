@@ -36,3 +36,4 @@ O handler valida o header `Stripe-Signature` com `STRIPE_WEBHOOK_SECRET`
 antes de processar qualquer evento.
 
 <!-- build pipeline test -->
+<!-- build pipeline probe: 2026-08-17T22:59Z -->
