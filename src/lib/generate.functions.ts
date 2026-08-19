@@ -4,6 +4,34 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { buildMessages, callAiGateway } from "./generate.server";
 import { FREE_DAILY_LIMIT, PRO_DAILY_LIMIT, isProOnlyTone, assertTonePermitted } from "./types";
 
+/**
+ * Gives back the daily generation that consume_generation already debited,
+ * for a request that ends up delivering nothing.
+ *
+ * Swallows its own failure on purpose. This must never replace the error that
+ * caused the refund: the caller rethrows that one, and a refund problem that
+ * masked it would make the original failure harder to diagnose, not easier.
+ *
+ * Note that supabase-js reports RPC problems in `error` rather than throwing,
+ * so the returned error is checked as well as the surrounding try/catch. That
+ * also covers the window where this code is deployed before the migration
+ * that creates refund_generation has been applied.
+ */
+async function refundGeneration(
+  supabase: {
+    rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }>;
+  },
+): Promise<void> {
+  try {
+    const { error } = await supabase.rpc("refund_generation", {});
+    if (error) {
+      console.error("[generate] refund failed", error);
+    }
+  } catch (refundErr) {
+    console.error("[generate] refund failed", refundErr);
+  }
+}
+
 const inputSchema = z.object({
   platform: z.enum(["tiktok", "reels", "shorts"]),
   tone: z.enum(["engracado", "motivacional", "educativo", "storytelling", "provocativo", "luxo"]),
@@ -58,32 +86,51 @@ export const generateContent = createServerFn({ method: "POST" })
       throw err;
     }
 
-    // Per-minute rate limit (30/min for Pro, 5/min for Free) using service role.
-    {
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      const admin = supabaseAdmin as unknown as {
-        rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }>;
-      };
-      const { data: allowed, error: rateError } = await admin.rpc("check_rate_limit", {
-        _user_id: context.userId,
-        _window_seconds: 60,
-        _max_requests: usage.plan === "pro" ? 30 : 5,
-      });
-      if (rateError) {
-        console.error("[generate] check_rate_limit error", rateError);
-      } else if (allowed === false) {
-        throw new Error("RATE_LIMIT");
+    // The generation is debited from here on. Every failure between this point
+    // and a delivered result has to give it back, otherwise the user pays for
+    // an outage of ours. The debit itself is deliberately not moved after the
+    // AI call: it has to stay atomic, and debiting later would let two
+    // concurrent requests both read the counter below the limit and pass.
+    //
+    // This covers RATE_LIMIT and every error callAiGateway can raise
+    // (AI_KEY_MISSING, AI_TIMEOUT, AI_RATE_LIMIT, AI_CREDITS, AI_ERROR,
+    // AI_BAD_OUTPUT from a missing tool call, invalid JSON or a failed zod
+    // schema check, plus any raw network error), without enumerating them.
+    let result: Awaited<ReturnType<typeof callAiGateway>>;
+    try {
+      // Per-minute rate limit (30/min for Pro, 5/min for Free) using service role.
+      {
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const admin = supabaseAdmin as unknown as {
+          rpc: (
+            fn: string,
+            args: Record<string, unknown>,
+          ) => Promise<{ data: unknown; error: unknown }>;
+        };
+        const { data: allowed, error: rateError } = await admin.rpc("check_rate_limit", {
+          _user_id: context.userId,
+          _window_seconds: 60,
+          _max_requests: usage.plan === "pro" ? 30 : 5,
+        });
+        if (rateError) {
+          console.error("[generate] check_rate_limit error", rateError);
+        } else if (allowed === false) {
+          throw new Error("RATE_LIMIT");
+        }
       }
+
+      const messages = buildMessages({
+        platform: data.platform,
+        tone: data.tone,
+        topic: data.topic,
+        transcript: data.transcript || undefined,
+      });
+
+      result = await callAiGateway(messages);
+    } catch (err) {
+      await refundGeneration(supabase);
+      throw err;
     }
-
-    const messages = buildMessages({
-      platform: data.platform,
-      tone: data.tone,
-      topic: data.topic,
-      transcript: data.transcript || undefined,
-    });
-
-    const result = await callAiGateway(messages);
 
     // The user's authenticated client can no longer INSERT into generations
     // (RLS is SELECT-only). consume_generation() already validated the caller
@@ -111,9 +158,14 @@ export const generateContent = createServerFn({ method: "POST" })
       console.error("[generate] insert error", insertError);
     }
 
+    // id is null when the row was not persisted. It used to be a fresh
+    // crypto.randomUUID(), which looked valid to the client and then failed
+    // silently on favourite: the "Users insert own favorites" policy requires
+    // generation_id to exist and belong to the caller. The result is still
+    // delivered; the UI disables favouriting when id is null.
     const saved = (row ?? {}) as { id?: string; created_at?: string };
     return {
-      id: saved.id ?? crypto.randomUUID(),
+      id: saved.id ?? null,
       created_at: saved.created_at ?? new Date().toISOString(),
       ...result,
       usage,

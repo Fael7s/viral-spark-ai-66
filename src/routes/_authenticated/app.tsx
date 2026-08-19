@@ -47,7 +47,7 @@ function GeneratePage() {
   const [tone, setTone] = useState<Tone>("engracado");
   const [topic, setTopic] = useState("");
   const [transcript, setTranscript] = useState("");
-  const [result, setResult] = useState<(GenerationResult & { id: string }) | null>(null);
+  const [result, setResult] = useState<(GenerationResult & { id: string | null }) | null>(null);
   const [favorited, setFavorited] = useState(false);
   const [limitHit, setLimitHit] = useState(false);
 
@@ -93,7 +93,9 @@ function GeneratePage() {
   });
 
   const handleFavorite = async () => {
-    if (!result || !user) return;
+    // A null id means the generation was not persisted, so there is no row to
+    // reference and the favourites policy would reject the insert.
+    if (!result || !result.id || !user) return;
     const next = !favorited;
     setFavorited(next);
     try {
@@ -286,10 +288,22 @@ function GeneratePage() {
               <ResultCardsSkeleton />
             ) : result ? (
               <>
-                <div className="flex justify-end">
+                <div className="flex items-center justify-end gap-3">
+                  {result.id ? null : (
+                    <span className="text-xs text-muted-foreground">
+                      Não deu para guardar esta geração no histórico, então ela não pode ser
+                      favoritada. Copia o que interessa antes de sair.
+                    </span>
+                  )}
                   <Button
                     variant={favorited ? "default" : "secondary"}
                     size="sm"
+                    disabled={!result.id}
+                    title={
+                      result.id
+                        ? undefined
+                        : "Esta geração não foi salva no histórico, então não dá para favoritar."
+                    }
                     className={`gap-1.5 ${favorited ? "bg-primary text-primary-foreground" : ""}`}
                     onClick={handleFavorite}
                   >
