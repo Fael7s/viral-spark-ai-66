@@ -55,7 +55,26 @@ const errorMiddleware = createMiddleware().server(async ({ next }) => {
   }
 });
 
+// Function middleware. errorMiddleware above is a request middleware and never
+// sees exceptions thrown inside createServerFn handlers, so without this every
+// server function throw is serialized to the client with no server-side trace.
+// It logs and rethrows the original error untouched: the UI maps errors by
+// substring (upgrade.tsx, app.tsx), so replacing or wrapping it would break
+// the user-facing message.
+const functionErrorLogger = createMiddleware({ type: "function" }).server(async ({ next }) => {
+  try {
+    return await next();
+  } catch (error) {
+    console.error("[serverFn] unhandled error", {
+      name: error instanceof Error ? error.name : typeof error,
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+    throw error;
+  }
+});
+
 export const startInstance = createStart(() => ({
-  functionMiddleware: [attachSupabaseAuth],
+  functionMiddleware: [attachSupabaseAuth, functionErrorLogger],
   requestMiddleware: [securityHeadersMiddleware, errorMiddleware],
 }));

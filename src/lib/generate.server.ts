@@ -194,4 +194,6 @@ export const ERROR_MESSAGES: Record<string, string> = {
   TONE_REQUIRES_PRO: "Esse tom é do plano Pro. Passa para o Pro para usar.",
   RATE_LIMIT: "Calma aí. Espera um minuto antes de tentar de novo.",
   BILLING_CONFIG_ERROR: "Não deu para abrir o checkout. Tenta de novo em instantes.",
+  BILLING_UNAVAILABLE: "O pagamento está indisponível agora. Tenta de novo em alguns minutos.",
+  NO_CUSTOMER: "Não encontramos uma assinatura ativa nessa conta.",
 };

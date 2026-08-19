@@ -91,6 +91,9 @@ export const requireSupabaseAuth = createMiddleware({ type: 'function' }).server
 
     const { data, error } = await supabase.auth.getClaims(token);
     if (error || !data?.claims) {
+      // Without this an expired token, a wrong key and a malformed JWT are
+      // indistinguishable in the logs. The thrown error is unchanged.
+      console.error('[auth] getClaims failed', error);
       throw new Error('Unauthorized: Invalid token');
     }
 

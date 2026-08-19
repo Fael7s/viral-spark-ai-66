@@ -64,7 +64,8 @@ function GeneratePage() {
     try {
       await navigator.clipboard.writeText(referralLink);
       toast.success("Link copiado.");
-    } catch {
+    } catch (err) {
+      console.error("[app] clipboard write failed (referral link)", err);
       toast.error("Não foi possível copiar o link.");
     }
   };
@@ -79,6 +80,7 @@ function GeneratePage() {
       queryClient.invalidateQueries({ queryKey: ["history"] });
     },
     onError: (err: Error) => {
+      console.error("[generate] request failed", err);
       if (err.message.includes("LIMIT_REACHED")) {
         setLimitHit(true);
         toast.error("Acabaram as gerações de hoje.");
@@ -98,7 +100,8 @@ function GeneratePage() {
       await toggleFavorite(user.id, result.id, next);
       queryClient.invalidateQueries({ queryKey: ["favorites"] });
       toast.success(next ? "Salvo nos favoritos." : "Tirado dos favoritos.");
-    } catch {
+    } catch (err) {
+      console.error("[app] toggleFavorite failed", { generationId: result.id, on: next, error: err });
       setFavorited(!next);
       toast.error("Não foi possível salvar o favorito.");
     }

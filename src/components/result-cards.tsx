@@ -21,7 +21,8 @@ function CopyButton({ text, label }: { text: string; label?: string }) {
           setCopied(true);
           toast.success("Copiado.");
           setTimeout(() => setCopied(false), 1500);
-        } catch {
+        } catch (err) {
+          console.error("[result-cards] clipboard write failed", err);
           toast.error("Não deu para copiar.");
         }
       }}

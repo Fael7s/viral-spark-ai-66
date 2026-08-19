@@ -43,7 +43,8 @@ export function GenerationList({
       await toggleFavorite(user.id, id, on);
       queryClient.invalidateQueries({ queryKey: ["favorites"] });
       toast.success(on ? "Salvo nos favoritos." : "Tirado dos favoritos.");
-    } catch {
+    } catch (err) {
+      console.error("[generation-list] toggleFavorite failed", { generationId: id, on, error: err });
       setFavs(favs);
       toast.error("Não deu para salvar. Tenta de novo.");
     }

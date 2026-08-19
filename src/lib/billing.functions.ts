@@ -2,6 +2,32 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequestHeader } from "@tanstack/react-start/server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
+/**
+ * Logs the real cause of a Stripe SDK failure and rethrows a stable code for
+ * the UI. A StripeError carries type, code, statusCode and requestId; without
+ * this the log says nothing and the generic toast is the only trace left.
+ *
+ * Records diagnostic fields only: never the request body and never the key.
+ */
+function reportStripeFailure(operation: string, err: unknown): never {
+  const e = err as {
+    type?: string;
+    code?: string;
+    statusCode?: number;
+    requestId?: string;
+    message?: string;
+  };
+  console.error("[billing] stripe call failed", {
+    operation,
+    type: e?.type ?? null,
+    code: e?.code ?? null,
+    statusCode: e?.statusCode ?? null,
+    requestId: e?.requestId ?? null,
+    message: e?.message ?? String(err),
+  });
+  throw new Error("BILLING_UNAVAILABLE");
+}
+
 function resolveBaseUrl(): string {
   const allowedOrigin = process.env.APP_ORIGIN;
   if (allowedOrigin) return allowedOrigin;
@@ -51,19 +77,25 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
     const stripe = getStripe();
     const baseUrl = resolveBaseUrl();
 
-    const session = await stripe.checkout.sessions.create({
-      mode: "subscription",
-      line_items: [{ price: priceId, quantity: 1 }],
-      client_reference_id: context.userId,
-      metadata: { supabase_user_id: context.userId },
-      subscription_data: {
+    let session: Awaited<ReturnType<typeof stripe.checkout.sessions.create>>;
+    try {
+      session = await stripe.checkout.sessions.create({
+        mode: "subscription",
+        line_items: [{ price: priceId, quantity: 1 }],
+        client_reference_id: context.userId,
         metadata: { supabase_user_id: context.userId },
-      },
-      success_url: `${baseUrl}/app?upgraded=true`,
-      cancel_url: `${baseUrl}/upgrade`,
-    });
+        subscription_data: {
+          metadata: { supabase_user_id: context.userId },
+        },
+        success_url: `${baseUrl}/app?upgraded=true`,
+        cancel_url: `${baseUrl}/upgrade`,
+      });
+    } catch (err) {
+      reportStripeFailure("checkout.sessions.create", err);
+    }
 
     if (!session.url) {
+      console.error("[billing] checkout session created without url", { id: session.id });
       throw new Error("Stripe did not return a checkout URL.");
     }
     return { url: session.url };
@@ -89,7 +121,10 @@ export const createBillingPortalSession = createServerFn({ method: "POST" })
       .from("subscriptions")
       .select("stripe_customer_id")
       .maybeSingle();
-    if (error) throw new Error("Failed to load subscription.");
+    if (error) {
+      console.error("[billing] subscription lookup failed", error);
+      throw new Error("Failed to load subscription.");
+    }
 
     const customerId = (sub as { stripe_customer_id?: string } | null)?.stripe_customer_id;
     if (!customerId) {
@@ -100,10 +135,13 @@ export const createBillingPortalSession = createServerFn({ method: "POST" })
     const stripe = getStripe();
     const baseUrl = resolveBaseUrl();
 
-    const portal = await stripe.billingPortal.sessions.create({
-      customer: customerId,
-      return_url: `${baseUrl}/app`,
-    });
-
-    return { url: portal.url };
+    try {
+      const portal = await stripe.billingPortal.sessions.create({
+        customer: customerId,
+        return_url: `${baseUrl}/app`,
+      });
+      return { url: portal.url };
+    } catch (err) {
+      reportStripeFailure("billingPortal.sessions.create", err);
+    }
   });

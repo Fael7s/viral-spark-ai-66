@@ -4,6 +4,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
+import { reportLovableError } from "@/lib/lovable-error-reporting";
 import { useAuth } from "@/hooks/use-auth";
 import { Logo } from "@/components/site-header";
 import { Card } from "@/components/ui/card";
@@ -21,6 +22,24 @@ const passwordSchema = z
   .regex(/[A-Z]/, "A senha deve conter pelo menos 1 letra maiúscula.")
   .regex(/[0-9]/, "A senha deve conter pelo menos 1 número.")
   .regex(/[^A-Za-z0-9]/, "A senha deve conter pelo menos 1 caractere especial.");
+
+/**
+ * The OAuth SDK returns distinct causes behind the same visible outcome
+ * ("Popup was blocked", "State is invalid", "No tokens received", the
+ * provider's error_description). A blocked popup is something the user can
+ * act on, so it gets its own text; everything else stays generic on screen
+ * and goes to the log in full.
+ */
+function oauthMessage(error: Error): string {
+  const m = error.message ?? "";
+  if (m.includes("Popup was blocked")) {
+    return "Seu navegador bloqueou a janela do Google. Libera o pop-up e tenta de novo.";
+  }
+  if (m.includes("State is invalid")) {
+    return "A sessão de login expirou. Tenta entrar com o Google de novo.";
+  }
+  return "Não foi possível entrar com o Google.";
+}
 
 function AuthPage() {
   const [mode, setMode] = useState<"login" | "signup">("login");
@@ -81,6 +100,8 @@ function AuthPage() {
       }
       navigate({ to: "/app", replace: true });
     } catch (err) {
+      // Mode and error object only. Never log the e-mail or the password.
+      console.error("[auth] password flow failed", { mode, error: err });
       const msg = err instanceof Error ? err.message : "";
       if (msg.includes("Invalid login") || msg.includes("Email not confirmed")) {
         toast.error("E-mail ou senha incorretos.");
@@ -100,7 +121,11 @@ function AuthPage() {
       redirect_uri: window.location.origin,
     });
     if (result.error) {
-      toast.error("Não foi possível entrar com o Google.");
+      const error =
+        result.error instanceof Error ? result.error : new Error(String(result.error));
+      console.error("[auth] signInWithOAuth(google) failed", error);
+      reportLovableError(error, { step: "signInWithOAuth", provider: "google" });
+      toast.error(oauthMessage(error));
       setLoading(false);
       return;
     }
