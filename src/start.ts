@@ -4,28 +4,37 @@ import { setResponseHeader } from "@tanstack/react-start/server";
 import { renderErrorPage } from "./lib/error-page";
 import { attachSupabaseAuth } from "@/integrations/supabase/auth-attacher";
 
-// Content-Security-Policy allowing only the origins the app actually needs:
-// Supabase (auth/data/realtime) and Stripe (checkout + billing scripts/iframes).
+// Content-Security-Policy allowing only the origins the app actually needs,
+// which is Supabase (auth/data/realtime) and nothing else.
+//
+// No Stripe origin is listed. The only Stripe dependency is the server-side
+// SDK: package.json carries "stripe" alone, and nothing imports
+// @stripe/stripe-js, loadStripe, Elements or Embedded Checkout. Checkout is
+// reached by assigning window.location.href to the session URL, which is a
+// top-level navigation and is governed by none of script-src, frame-src or
+// connect-src, so removing those entries does not affect the payment flow.
+// form-action only constrains form submission targets and does not apply
+// either.
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
 
 // 'unsafe-eval' is only needed for Vite's HMR in development; production builds
 // must not allow eval(). 'unsafe-inline' stays for now (nonce-based CSP later).
 const SCRIPT_SRC = IS_PRODUCTION
-  ? "script-src 'self' 'unsafe-inline' https://js.stripe.com https://checkout.stripe.com"
-  : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://checkout.stripe.com";
+  ? "script-src 'self' 'unsafe-inline'"
+  : "script-src 'self' 'unsafe-inline' 'unsafe-eval'";
 
 const CONTENT_SECURITY_POLICY = [
   "default-src 'self'",
-  // Vite/React and Stripe.js need inline bootstrap; Stripe scripts served from js.stripe.com.
+  // Vite/React need an inline bootstrap; no third-party script origin is used.
   SCRIPT_SRC,
   // Tailwind/inline styles + Google Fonts stylesheet used in __root head.
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' data: https://fonts.gstatic.com",
   "img-src 'self' data: blob: https:",
-  // Supabase REST/Auth/Storage over https + Realtime over wss; Stripe API.
-  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com",
-  // Stripe Checkout / 3DS iframes.
-  "frame-src https://js.stripe.com https://checkout.stripe.com https://hooks.stripe.com",
+  // Supabase REST/Auth/Storage over https + Realtime over wss.
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+  // The app embeds no iframes of its own and none from third parties.
+  "frame-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
   "object-src 'none'",

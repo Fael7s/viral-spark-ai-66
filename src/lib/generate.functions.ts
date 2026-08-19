@@ -17,11 +17,9 @@ import { FREE_DAILY_LIMIT, PRO_DAILY_LIMIT, isProOnlyTone, assertTonePermitted }
  * also covers the window where this code is deployed before the migration
  * that creates refund_generation has been applied.
  */
-async function refundGeneration(
-  supabase: {
-    rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }>;
-  },
-): Promise<void> {
+async function refundGeneration(supabase: {
+  rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }>;
+}): Promise<void> {
   try {
     const { error } = await supabase.rpc("refund_generation", {});
     if (error) {
@@ -77,7 +75,10 @@ export const generateContent = createServerFn({ method: "POST" })
   })
   .handler(async ({ data, context }) => {
     const supabase = context.supabase as unknown as {
-      rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }>;
+      rpc: (
+        fn: string,
+        args: Record<string, unknown>,
+      ) => Promise<{ data: unknown; error: unknown }>;
       from: (table: string) => {
         select: (columns: string) => {
           maybeSingle: () => Promise<{ data: unknown; error: unknown }>;

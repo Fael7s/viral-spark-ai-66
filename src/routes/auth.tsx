@@ -121,8 +121,7 @@ function AuthPage() {
       redirect_uri: window.location.origin,
     });
     if (result.error) {
-      const error =
-        result.error instanceof Error ? result.error : new Error(String(result.error));
+      const error = result.error instanceof Error ? result.error : new Error(String(result.error));
       console.error("[auth] signInWithOAuth(google) failed", error);
       reportLovableError(error, { step: "signInWithOAuth", provider: "google" });
       toast.error(oauthMessage(error));

@@ -108,7 +108,11 @@ function GeneratePage() {
       queryClient.invalidateQueries({ queryKey: ["favorites"] });
       toast.success(next ? "Salvo nos favoritos." : "Tirado dos favoritos.");
     } catch (err) {
-      console.error("[app] toggleFavorite failed", { generationId: result.id, on: next, error: err });
+      console.error("[app] toggleFavorite failed", {
+        generationId: result.id,
+        on: next,
+        error: err,
+      });
       setFavorited(!next);
       toast.error("Não foi possível salvar o favorito.");
     }

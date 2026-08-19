@@ -33,7 +33,10 @@ function resolveBaseUrl(): string {
   if (allowedOrigin) return allowedOrigin;
 
   const origin = getRequestHeader("origin");
-  const allowedHosts = process.env.ALLOWED_HOSTS?.split(",").map((h) => h.trim()).filter(Boolean) ?? [];
+  const allowedHosts =
+    process.env.ALLOWED_HOSTS?.split(",")
+      .map((h) => h.trim())
+      .filter(Boolean) ?? [];
   if (origin?.startsWith("https://") || origin?.startsWith("http://localhost")) {
     if (allowedHosts.length === 0 || allowedHosts.some((h) => origin.includes(h))) {
       return origin;

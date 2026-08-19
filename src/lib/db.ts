@@ -82,7 +82,6 @@ export async function fetchHistory(cursor?: HistoryCursor | null): Promise<Histo
   };
 }
 
-
 export async function fetchFavorites(): Promise<GenerationRecord[]> {
   const { data, error } = await db
     .from("favorites")
@@ -161,4 +160,3 @@ export async function fetchReferralInfo(): Promise<ReferralInfo> {
 }
 
 export type { GenerationResult };
-

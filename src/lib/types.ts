@@ -1,11 +1,6 @@
 export type Platform = "tiktok" | "reels" | "shorts";
 export type Tone =
-  | "engracado"
-  | "motivacional"
-  | "educativo"
-  | "storytelling"
-  | "provocativo"
-  | "luxo";
+  "engracado" | "motivacional" | "educativo" | "storytelling" | "provocativo" | "luxo";
 
 export interface GenerationResult {
   hooks: string[];

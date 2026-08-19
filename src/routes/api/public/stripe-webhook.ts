@@ -72,11 +72,7 @@ export const Route = createFileRoute("/api/public/stripe-webhook")({
 
         let event: Stripe.Event;
         try {
-          event = await stripe.webhooks.constructEventAsync(
-            rawBody,
-            signature,
-            webhookSecret,
-          );
+          event = await stripe.webhooks.constructEventAsync(rawBody, signature, webhookSecret);
         } catch (err) {
           console.error("[stripe-webhook] Signature verification failed", err);
           return new Response("Invalid signature", { status: 400 });
@@ -108,16 +104,13 @@ export const Route = createFileRoute("/api/public/stripe-webhook")({
           switch (event.type) {
             case "checkout.session.completed": {
               const session = event.data.object as Stripe.Checkout.Session;
-              const userId =
-                session.metadata?.supabase_user_id ?? session.client_reference_id;
+              const userId = session.metadata?.supabase_user_id ?? session.client_reference_id;
               const subscriptionId =
                 typeof session.subscription === "string"
                   ? session.subscription
                   : session.subscription?.id;
               const customerId =
-                typeof session.customer === "string"
-                  ? session.customer
-                  : session.customer?.id;
+                typeof session.customer === "string" ? session.customer : session.customer?.id;
 
               if (!userId || !subscriptionId) {
                 console.error("[stripe-webhook] Missing userId/subscriptionId on session");
@@ -127,21 +120,19 @@ export const Route = createFileRoute("/api/public/stripe-webhook")({
               const subscription = await stripe.subscriptions.retrieve(subscriptionId);
 
               const eventCreatedISO = new Date(event.created * 1000).toISOString();
-              const { error } = await db
-                .from("subscriptions")
-                .upsert(
-                  {
-                    user_id: userId,
-                    plan: "pro",
-                    status: subscription.status,
-                    stripe_customer_id: customerId ?? null,
-                    stripe_subscription_id: subscription.id,
-                    current_period_end: periodEndISO(subscription),
-                    last_stripe_event_created: eventCreatedISO,
-                    updated_at: new Date().toISOString(),
-                  },
-                  { onConflict: "user_id" },
-                );
+              const { error } = await db.from("subscriptions").upsert(
+                {
+                  user_id: userId,
+                  plan: "pro",
+                  status: subscription.status,
+                  stripe_customer_id: customerId ?? null,
+                  stripe_subscription_id: subscription.id,
+                  current_period_end: periodEndISO(subscription),
+                  last_stripe_event_created: eventCreatedISO,
+                  updated_at: new Date().toISOString(),
+                },
+                { onConflict: "user_id" },
+              );
               // A failed upgrade write must surface as an error so Stripe
               // retries the event. Returning 200 here would drop the upgrade
               // silently while the customer is already charged.

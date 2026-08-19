@@ -4,7 +4,10 @@ import { ResultCards, ResultCardsSkeleton } from "@/components/result-cards";
 import type { GenerationResult } from "@/lib/types";
 
 const mockResult: GenerationResult = {
-  hooks: ["H1","H2","H3"], captions: ["C1","C2","C3"], emojis: ["🔥","✨","💡","🚀","⚡","💪"], hashtags: ["#a","#b","#c","#d"]
+  hooks: ["H1", "H2", "H3"],
+  captions: ["C1", "C2", "C3"],
+  emojis: ["🔥", "✨", "💡", "🚀", "⚡", "💪"],
+  hashtags: ["#a", "#b", "#c", "#d"],
 };
 
 describe("Interface", () => {
@@ -19,12 +22,14 @@ describe("Interface", () => {
 
   it("emojis sao botoes clicaveis", () => {
     render(<ResultCards result={mockResult} />);
-    mockResult.emojis.forEach(e => expect(screen.getByRole("button", { name: e })).toBeInTheDocument());
+    mockResult.emojis.forEach((e) =>
+      expect(screen.getByRole("button", { name: e })).toBeInTheDocument(),
+    );
   });
 
   it("hashtags com #", () => {
     render(<ResultCards result={mockResult} />);
-    mockResult.hashtags.forEach(t => expect(screen.getByText(t)).toBeInTheDocument());
+    mockResult.hashtags.forEach((t) => expect(screen.getByText(t)).toBeInTheDocument());
   });
 
   it("copiar hooks funciona", async () => {
@@ -49,7 +54,7 @@ describe("Interface", () => {
 
   it("desabilita botoes durante regeneracao", () => {
     render(<ResultCards result={mockResult} onRegenerate={vi.fn()} regenerating="captions" />);
-    screen.getAllByText("Variar").forEach(b => expect(b).toBeDisabled());
+    screen.getAllByText("Variar").forEach((b) => expect(b).toBeDisabled());
   });
 
   it("skeleton renderiza", () => {
@@ -58,9 +63,12 @@ describe("Interface", () => {
   });
 
   it("normalizacao hashtags sem ##", () => {
-    const raw = ["a","#b","##c","###d"];
-    const norm = raw.map(h => { const c = h.trim().replace(/^#+/, ""); return c ? `#${c}` : h.trim(); });
-    expect(norm).toEqual(["#a","#b","#c","#d"]);
+    const raw = ["a", "#b", "##c", "###d"];
+    const norm = raw.map((h) => {
+      const c = h.trim().replace(/^#+/, "");
+      return c ? `#${c}` : h.trim();
+    });
+    expect(norm).toEqual(["#a", "#b", "#c", "#d"]);
   });
 
   it("limites de caracteres por plataforma", () => {

@@ -22,13 +22,10 @@ export function GenerationList({
   /** Abre o primeiro item apenas na primeira pagina carregada. */
   autoOpenFirst?: boolean;
 }) {
-  const [open, setOpen] = useState<string | null>(
-    autoOpenFirst ? (items[0]?.id ?? null) : null,
-  );
+  const [open, setOpen] = useState<string | null>(autoOpenFirst ? (items[0]?.id ?? null) : null);
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [favs, setFavs] = useState(favoriteIds);
-
 
   const platformLabel = (v: string) => PLATFORMS.find((p) => p.value === v)?.label ?? v;
   const toneLabel = (v: string) => TONES.find((t) => t.value === v)?.label ?? v;
@@ -44,7 +41,11 @@ export function GenerationList({
       queryClient.invalidateQueries({ queryKey: ["favorites"] });
       toast.success(on ? "Salvo nos favoritos." : "Tirado dos favoritos.");
     } catch (err) {
-      console.error("[generation-list] toggleFavorite failed", { generationId: id, on, error: err });
+      console.error("[generation-list] toggleFavorite failed", {
+        generationId: id,
+        on,
+        error: err,
+      });
       setFavs(favs);
       toast.error("Não deu para salvar. Tenta de novo.");
     }
