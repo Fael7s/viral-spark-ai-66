@@ -10,7 +10,7 @@ import { FREE_DAILY_LIMIT, PRO_DAILY_LIMIT, isProOnlyTone, assertTonePermitted }
  * public.refund_generation in the schema cache"); a direct Postgres error
  * would be 42883.
  */
-function isMissingFunctionError(err: unknown): boolean {
+export function isMissingFunctionError(err: unknown): boolean {
   const e = err as { code?: unknown; message?: unknown };
   if (e?.code === "PGRST202" || e?.code === "42883") return true;
   const message = typeof e?.message === "string" ? e.message : String(err ?? "");
@@ -65,7 +65,7 @@ export const TOPIC_MIN_LENGTH = 3;
 export const TOPIC_MAX_LENGTH = 400;
 export const TRANSCRIPT_MAX_LENGTH = 5000;
 
-const inputSchema = z.object({
+export const inputSchema = z.object({
   platform: z.enum(["tiktok", "reels", "shorts"]),
   tone: z.enum(["engracado", "motivacional", "educativo", "storytelling", "provocativo", "luxo"]),
   // The messages are codes because the UI resolves the text through

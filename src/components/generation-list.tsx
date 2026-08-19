@@ -34,7 +34,11 @@ export function GenerationList({
     if (!user) return;
     const on = !favs.has(id);
     const next = new Set(favs);
-    on ? next.add(id) : next.delete(id);
+    if (on) {
+      next.add(id);
+    } else {
+      next.delete(id);
+    }
     setFavs(next);
     try {
       await toggleFavorite(user.id, id, on);
