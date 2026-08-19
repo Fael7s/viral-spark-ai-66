@@ -5,6 +5,37 @@ import { buildMessages, callAiGateway } from "./generate.server";
 import { FREE_DAILY_LIMIT, PRO_DAILY_LIMIT, isProOnlyTone, assertTonePermitted } from "./types";
 
 /**
+ * True when the refund failed only because refund_generation is not in the
+ * database yet. PostgREST answers PGRST202 ("Could not find the function
+ * public.refund_generation in the schema cache"); a direct Postgres error
+ * would be 42883.
+ */
+function isMissingFunctionError(err: unknown): boolean {
+  const e = err as { code?: unknown; message?: unknown };
+  if (e?.code === "PGRST202" || e?.code === "42883") return true;
+  const message = typeof e?.message === "string" ? e.message : String(err ?? "");
+  return message.includes("Could not find the function") || message.includes("does not exist");
+}
+
+/**
+ * A pending migration is a deployment gap, not a runtime fault, and it would
+ * otherwise write one console.error per failed generation into exactly the log
+ * someone is reading to diagnose that failure. Keep it at warn level and say
+ * what it actually is.
+ */
+function reportRefundFailure(err: unknown): void {
+  if (isMissingFunctionError(err)) {
+    console.warn(
+      "[generate] refund skipped: refund_generation is not in the database yet. " +
+        "Pending migration, not a runtime failure. See supabase/migrations/README.md.",
+      err,
+    );
+    return;
+  }
+  console.error("[generate] refund failed", err);
+}
+
+/**
  * Gives back the daily generation that consume_generation already debited,
  * for a request that ends up delivering nothing.
  *
@@ -23,10 +54,10 @@ async function refundGeneration(supabase: {
   try {
     const { error } = await supabase.rpc("refund_generation", {});
     if (error) {
-      console.error("[generate] refund failed", error);
+      reportRefundFailure(error);
     }
   } catch (refundErr) {
-    console.error("[generate] refund failed", refundErr);
+    reportRefundFailure(refundErr);
   }
 }
 
