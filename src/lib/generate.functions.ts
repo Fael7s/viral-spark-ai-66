@@ -32,16 +32,49 @@ async function refundGeneration(
   }
 }
 
+export const TOPIC_MIN_LENGTH = 3;
+export const TOPIC_MAX_LENGTH = 400;
+export const TRANSCRIPT_MAX_LENGTH = 5000;
+
 const inputSchema = z.object({
   platform: z.enum(["tiktok", "reels", "shorts"]),
   tone: z.enum(["engracado", "motivacional", "educativo", "storytelling", "provocativo", "luxo"]),
-  topic: z.string().trim().min(3, "Descreva o tema com pelo menos 3 caracteres").max(400),
-  transcript: z.string().trim().max(5000).optional().default(""),
+  // The messages are codes because the UI resolves the text through
+  // ERROR_MESSAGES. zod's default message ("String must contain at most 400
+  // character(s)") matches no key and fell through to the generic fallback,
+  // which happens to be the same text as AI_ERROR, making a validation
+  // failure and an AI failure indistinguishable on screen.
+  topic: z
+    .string()
+    .trim()
+    .min(TOPIC_MIN_LENGTH, "TOPIC_TOO_SHORT")
+    .max(TOPIC_MAX_LENGTH, "TOPIC_TOO_LONG"),
+  transcript: z
+    .string()
+    .trim()
+    .max(TRANSCRIPT_MAX_LENGTH, "TRANSCRIPT_TOO_LONG")
+    .optional()
+    .default(""),
 });
 
 export const generateContent = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => inputSchema.parse(data))
+  .inputValidator((data: unknown) => {
+    const parsed = inputSchema.safeParse(data);
+    if (!parsed.success) {
+      // Field, code and message only. Never the content the user submitted.
+      console.error("[generate] input validation failed", {
+        issues: parsed.error.issues.map((i) => ({
+          path: i.path.join("."),
+          code: i.code,
+          message: i.message,
+        })),
+      });
+      // Rethrow the zod error so the UI behaves exactly as before.
+      throw parsed.error;
+    }
+    return parsed.data;
+  })
   .handler(async ({ data, context }) => {
     const supabase = context.supabase as unknown as {
       rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }>;

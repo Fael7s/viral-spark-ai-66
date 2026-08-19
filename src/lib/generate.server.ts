@@ -196,4 +196,7 @@ export const ERROR_MESSAGES: Record<string, string> = {
   BILLING_CONFIG_ERROR: "Não deu para abrir o checkout. Tenta de novo em instantes.",
   BILLING_UNAVAILABLE: "O pagamento está indisponível agora. Tenta de novo em alguns minutos.",
   NO_CUSTOMER: "Não encontramos uma assinatura ativa nessa conta.",
+  TOPIC_TOO_SHORT: "Escreve pelo menos 3 caracteres no tema do vídeo.",
+  TOPIC_TOO_LONG: "O tema passou de 400 caracteres. Encurta um pouco.",
+  TRANSCRIPT_TOO_LONG: "A transcrição passou de 5000 caracteres.",
 };

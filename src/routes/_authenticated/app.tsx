@@ -12,7 +12,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { generateContent } from "@/lib/generate.functions";
+import {
+  generateContent,
+  TOPIC_MAX_LENGTH,
+  TOPIC_MIN_LENGTH,
+  TRANSCRIPT_MAX_LENGTH,
+} from "@/lib/generate.functions";
 import { createBillingPortalSession } from "@/lib/billing.functions";
 import { ERROR_MESSAGES } from "@/lib/generate.server";
 import { fetchUsage, fetchReferralInfo, toggleFavorite } from "@/lib/db";
@@ -234,14 +239,30 @@ function GeneratePage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="topic">Tema do vídeo</Label>
+              <div className="flex items-baseline justify-between gap-2">
+                <Label htmlFor="topic">Tema do vídeo</Label>
+                <span
+                  aria-hidden
+                  className={`text-xs tabular-nums ${
+                    topic.length > TOPIC_MAX_LENGTH * 0.9 ? "text-primary" : "text-muted-foreground"
+                  }`}
+                >
+                  {topic.length}/{TOPIC_MAX_LENGTH}
+                </span>
+              </div>
               <Input
                 id="topic"
                 value={topic}
-                maxLength={400}
+                maxLength={TOPIC_MAX_LENGTH}
+                aria-describedby="topic-hint"
                 onChange={(e) => setTopic(e.target.value)}
                 placeholder="Ex: 3 erros que travam seu crescimento no Instagram"
               />
+              {topic.trim().length < TOPIC_MIN_LENGTH ? (
+                <p id="topic-hint" className="text-xs text-muted-foreground">
+                  Escreve pelo menos {TOPIC_MIN_LENGTH} caracteres para liberar o botão.
+                </p>
+              ) : null}
             </div>
 
             <div className="space-y-2">
@@ -249,7 +270,7 @@ function GeneratePage() {
               <Textarea
                 id="transcript"
                 value={transcript}
-                maxLength={5000}
+                maxLength={TRANSCRIPT_MAX_LENGTH}
                 onChange={(e) => setTranscript(e.target.value)}
                 placeholder="Cole aqui o roteiro ou a transcrição do vídeo para resultados mais precisos."
                 rows={5}
@@ -258,7 +279,7 @@ function GeneratePage() {
 
             <Button
               className="w-full gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
-              disabled={mutation.isPending || topic.trim().length < 3 || blocked}
+              disabled={mutation.isPending || topic.trim().length < TOPIC_MIN_LENGTH || blocked}
               onClick={() => mutation.mutate()}
             >
               <Wand2 className="h-4 w-4" />
