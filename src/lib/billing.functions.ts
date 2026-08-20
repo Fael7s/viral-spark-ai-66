@@ -76,6 +76,16 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
       throw new Error("ALREADY_PRO");
     }
 
+    // TEMPORARIO: diagnostico de runtime. Remover apos concluir a investigacao.
+    console.log(
+      "[diag] exists:",
+      process.env.STRIPE_SECRET_KEY !== undefined,
+      "prefix:",
+      process.env.STRIPE_SECRET_KEY?.slice(0, 3),
+      "len:",
+      process.env.STRIPE_SECRET_KEY?.length,
+    );
+
     const { getStripe } = await import("./stripe.server");
     const stripe = getStripe();
     const baseUrl = resolveBaseUrl();
