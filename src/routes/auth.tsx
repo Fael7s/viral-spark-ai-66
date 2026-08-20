@@ -4,6 +4,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
+import { attributionSignupMetadata } from "@/lib/attribution";
 import { reportLovableError } from "@/lib/lovable-error-reporting";
 import { useAuth } from "@/hooks/use-auth";
 import { Logo } from "@/components/site-header";
@@ -79,12 +80,21 @@ function AuthPage() {
     setLoading(true);
     try {
       if (mode === "signup") {
+        // referral_code keeps its previous behaviour exactly: present when a
+        // code was captured from ?ref=, absent otherwise. The attribution
+        // fields ride alongside it and are omitted when nothing valid was
+        // stored, so they arrive absent rather than as empty strings. data
+        // stays undefined when there is nothing at all to send, as before.
+        const signupMetadata = {
+          ...(referralCode ? { referral_code: referralCode } : {}),
+          ...attributionSignupMetadata(),
+        };
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
             emailRedirectTo: window.location.origin,
-            data: referralCode ? { referral_code: referralCode } : undefined,
+            data: Object.keys(signupMetadata).length > 0 ? signupMetadata : undefined,
           },
         });
         if (error) throw error;
