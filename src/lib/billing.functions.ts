@@ -77,7 +77,7 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
     }
 
     // TEMPORARIO: diagnostico de runtime. Remover apos concluir a investigacao.
-    console.log(
+    console.error(
       "[diag] exists:",
       process.env.STRIPE_SECRET_KEY !== undefined,
       "prefix:",
