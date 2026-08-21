@@ -18,7 +18,8 @@ são independentes, e é isso que esta página existe para rastrear.
 | `20260715015229_2f284f12-...` | Policy `deny all` em `processed_webhooks`; grants de `check_rate_limit` | Sim (indireto) |
 | `20260716233309_d87d870e-...` | Colunas de indicação em `profiles`; `generate_referral_code`; tabela `referral_bonuses`; `handle_new_user` e `consume_generation` reescritas com o bônus | Sim (indireto) |
 | `20260716233327_a7fd1d9b-...` | Grants de `generate_referral_code` | Sim (indireto) |
-| `20260819173500_a5e0e31f-...` | **`refund_generation`**: devolve uma geração diária quando a requisição não entrega nada | **NÃO — pendente** |
+| `20260819173500_a5e0e31f-...` | **`refund_generation`**: devolve uma geração diária quando a requisição não entrega nada | **Sim** — verificada em 2026-08-20 por consulta a `pg_proc` no schema `public` (`refund_generation` presente, `prosecdef = true`). Confirmado por consulta direta ao catálogo, não por registro de pipeline |
+| `20260820120000_0218220a-...` | Colunas `is_internal`, `utm_source`, `utm_medium`, `utm_campaign`, `landing_path`, `first_seen_at` em `profiles`; `handle_new_user` reescrita para gravá-las | **Sim** — verificada em 2026-08-20: `information_schema.columns` retorna as 6 colunas novas em `public.profiles`, e `pg_get_functiondef` confirma que `handle_new_user` no banco menciona `first_seen_at` e `utm_source` |
 
 "Sim (indireto)" quer dizer que não foi verificado contra o banco a partir daqui,
 e sim inferido do fato de que a aplicação em produção depende dessas estruturas
