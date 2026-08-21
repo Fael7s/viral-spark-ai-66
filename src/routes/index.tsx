@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Check, Mail } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
-import { ExamplePair, ExampleSwitcher, PhoneMockup } from "@/components/showcase";
+import { ExamplePair, ExampleSwitcher } from "@/components/showcase";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -59,7 +59,7 @@ function Landing() {
 
       {/* A tela de geração, no lugar dos cartões numerados de "como funciona". */}
       <section className="border-b border-border">
-        <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-16 lg:grid-cols-2 lg:py-24">
+        <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-16 lg:py-24">
           <div className="max-w-md">
             <h2 className="text-3xl font-bold leading-tight">É uma tela só</h2>
             <p className="mt-5 leading-relaxed text-muted-foreground">
@@ -77,17 +77,7 @@ function Landing() {
             </Button>
           </div>
 
-          <PhoneMockup>
-            {/* TODO: substituir por screenshot real */}
-            <div className="flex h-full flex-col items-center justify-center gap-3 px-6 text-center">
-              <span className="rounded-sm border border-dashed border-border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-                Placeholder
-              </span>
-              <p className="text-sm leading-relaxed text-muted-foreground">
-                Screenshot da tela de geração entra aqui.
-              </p>
-            </div>
-          </PhoneMockup>
+          {/* O screenshot real da tela de geração entra aqui, dentro de PhoneMockup. */}
         </div>
       </section>
 
@@ -150,7 +140,7 @@ function Landing() {
                 {[
                   "500 gerações por dia",
                   "Todos os tons e estilos",
-                  "Prioridade na fila de geração",
+                  "Até 30 gerações por minuto, contra 5 no plano gratuito",
                   "Histórico completo das suas gerações, favoritos sem limite",
                 ].map((f) => (
                   <li key={f} className="flex items-center gap-2.5">

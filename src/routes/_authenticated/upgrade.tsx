@@ -16,7 +16,7 @@ export const Route = createFileRoute("/_authenticated/upgrade")({
       {
         name: "description",
         content:
-          "Assine o plano Pro do ViralCaption e gere até 500 conteúdos virais por dia, com todos os tons e prioridade.",
+          "Assine o plano Pro do ViralCaption e gere até 500 conteúdos virais por dia, com todos os tons e até 30 gerações por minuto.",
       },
     ],
   }),
@@ -26,7 +26,7 @@ export const Route = createFileRoute("/_authenticated/upgrade")({
 const BENEFITS = [
   "500 gerações por dia (100x o plano gratuito)",
   "Todos os tons, incluindo Provocativo e Luxo",
-  "Prioridade na geração de conteúdo",
+  "Até 30 gerações por minuto, contra 5 no plano gratuito",
   "Histórico completo das suas gerações, favoritos sem limite",
 ];
 
