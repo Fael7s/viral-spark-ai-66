@@ -63,6 +63,9 @@ function AuthPage() {
         setMode("signup");
       }
     }
+    if (params.get("intent") === "pro") {
+      setIsProIntent(true);
+    }
   }, []);
 
   useEffect(() => {
