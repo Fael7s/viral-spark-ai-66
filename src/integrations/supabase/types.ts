@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.17"
   }
   public: {
     Tables: {
@@ -105,28 +105,46 @@ export type Database = {
           avatar_url: string | null
           created_at: string
           display_name: string | null
+          first_seen_at: string | null
           id: string
+          is_internal: boolean
+          landing_path: string | null
           referral_code: string
           referred_by: string | null
           updated_at: string
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string
           display_name?: string | null
+          first_seen_at?: string | null
           id: string
+          is_internal?: boolean
+          landing_path?: string | null
           referral_code: string
           referred_by?: string | null
           updated_at?: string
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
         }
         Update: {
           avatar_url?: string | null
           created_at?: string
           display_name?: string | null
+          first_seen_at?: string | null
           id?: string
+          is_internal?: boolean
+          landing_path?: string | null
           referral_code?: string
           referred_by?: string | null
           updated_at?: string
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
         }
         Relationships: []
       }
@@ -232,6 +250,7 @@ export type Database = {
         Returns: Json
       }
       generate_referral_code: { Args: never; Returns: string }
+      refund_generation: { Args: never; Returns: Json }
     }
     Enums: {
       plan_type: "free" | "pro"
