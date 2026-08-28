@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { HERO_EXAMPLES, NICHE_EXAMPLES } from "@/lib/examples";
 import { VENDOR } from "@/lib/vendor";
+import { DemoGenerator } from "@/components/demo-generator";
 
 export const Route = createFileRoute("/")({
   component: Landing,
@@ -56,6 +57,8 @@ function Landing() {
           </div>
         </div>
       </section>
+
+      <DemoGenerator />
 
       {/* A tela de geração, no lugar dos cartões numerados de "como funciona". */}
       <section className="border-b border-border">
