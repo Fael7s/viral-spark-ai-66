@@ -58,6 +58,8 @@ function Landing() {
         </div>
       </section>
 
+      <DemoGenerator />
+
       {/* A tela de geração, no lugar dos cartões numerados de "como funciona". */}
       <section className="border-b border-border">
         <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-16 lg:py-24">

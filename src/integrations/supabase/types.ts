@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      demo_generation_limits: {
+        Row: {
+          day: string
+          id: string
+          ip_hash: string
+          request_count: number
+          updated_at: string
+        }
+        Insert: {
+          day?: string
+          id?: string
+          ip_hash: string
+          request_count?: number
+          updated_at?: string
+        }
+        Update: {
+          day?: string
+          id?: string
+          ip_hash?: string
+          request_count?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       favorites: {
         Row: {
           created_at: string
@@ -245,11 +269,16 @@ export type Database = {
         }
         Returns: boolean
       }
+      consume_demo_generation: {
+        Args: { _daily_limit: number; _ip_hash: string }
+        Returns: Json
+      }
       consume_generation: {
         Args: { _free_limit: number; _pro_limit: number }
         Returns: Json
       }
       generate_referral_code: { Args: never; Returns: string }
+      refund_demo_generation: { Args: { _ip_hash: string }; Returns: undefined }
       refund_generation: { Args: never; Returns: Json }
     }
     Enums: {
