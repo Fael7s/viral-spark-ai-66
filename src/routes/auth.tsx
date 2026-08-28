@@ -143,7 +143,7 @@ function AuthPage() {
       return;
     }
     if (result.redirected) return;
-    navigate({ to: "/app", replace: true });
+    navigate({ to: isProIntent ? "/upgrade" : "/app", replace: true });
   };
 
   return (
