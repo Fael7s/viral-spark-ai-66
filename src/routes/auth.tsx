@@ -112,7 +112,7 @@ function AuthPage() {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
       }
-      navigate({ to: "/app", replace: true });
+      navigate({ to: isProIntent ? "/upgrade" : "/app", replace: true });
     } catch (err) {
       // Mode and error object only. Never log the e-mail or the password.
       console.error("[auth] password flow failed", { mode, error: err });
