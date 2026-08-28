@@ -48,6 +48,7 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [referralCode, setReferralCode] = useState<string | null>(null);
+  const [isProIntent, setIsProIntent] = useState(false);
   const { session } = useAuth();
   const navigate = useNavigate();
 
@@ -62,11 +63,14 @@ function AuthPage() {
         setMode("signup");
       }
     }
+    if (params.get("intent") === "pro") {
+      setIsProIntent(true);
+    }
   }, []);
 
   useEffect(() => {
-    if (session) navigate({ to: "/app", replace: true });
-  }, [session, navigate]);
+    if (session) navigate({ to: isProIntent ? "/upgrade" : "/app", replace: true });
+  }, [session, navigate, isProIntent]);
 
   const handleEmail = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -108,7 +112,7 @@ function AuthPage() {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
       }
-      navigate({ to: "/app", replace: true });
+      navigate({ to: isProIntent ? "/upgrade" : "/app", replace: true });
     } catch (err) {
       // Mode and error object only. Never log the e-mail or the password.
       console.error("[auth] password flow failed", { mode, error: err });
@@ -139,7 +143,7 @@ function AuthPage() {
       return;
     }
     if (result.redirected) return;
-    navigate({ to: "/app", replace: true });
+    navigate({ to: isProIntent ? "/upgrade" : "/app", replace: true });
   };
 
   return (
@@ -157,6 +161,15 @@ function AuthPage() {
               ? "Bom te ver de volta"
               : "Cinco gerações por dia, sem cartão de crédito"}
           </p>
+
+          {isProIntent ? (
+            <div className="mt-4 rounded-md border border-primary/40 bg-primary/10 px-3 py-2 text-center text-xs text-foreground">
+              Você está assinando o Pro — R$29,90/mês — 500 gerações por dia. O pagamento é o próximo
+              passo, depois do cadastro.
+            </div>
+          ) : null}
+
+          
 
           {referralCode && mode === "signup" ? (
             <div className="mt-4 rounded-md border border-primary/40 bg-primary/10 px-3 py-2 text-center text-xs text-foreground">
