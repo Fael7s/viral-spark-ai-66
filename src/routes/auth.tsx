@@ -69,8 +69,8 @@ function AuthPage() {
   }, []);
 
   useEffect(() => {
-    if (session) navigate({ to: "/app", replace: true });
-  }, [session, navigate]);
+    if (session) navigate({ to: isProIntent ? "/upgrade" : "/app", replace: true });
+  }, [session, navigate, isProIntent]);
 
   const handleEmail = async (e: React.FormEvent) => {
     e.preventDefault();
