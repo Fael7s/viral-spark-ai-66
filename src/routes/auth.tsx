@@ -48,6 +48,7 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [referralCode, setReferralCode] = useState<string | null>(null);
+  const [isProIntent, setIsProIntent] = useState(false);
   const { session } = useAuth();
   const navigate = useNavigate();
 
