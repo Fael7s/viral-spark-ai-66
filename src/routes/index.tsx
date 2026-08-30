@@ -155,7 +155,9 @@ function Landing() {
                 asChild
                 className="mt-8 w-full bg-primary text-primary-foreground hover:bg-primary/90"
               >
-                <Link to="/auth" search={{ intent: "pro" }}>Assinar o Pro</Link>
+                <Link to="/auth" search={{ intent: "pro" }}>
+                  Assinar o Pro
+                </Link>
               </Button>
               <p className="mt-3 text-center text-xs text-muted-foreground">
                 Cria a conta primeiro, a assinatura fecha no passo seguinte

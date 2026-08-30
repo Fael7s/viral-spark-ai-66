@@ -71,7 +71,9 @@ export function DemoGenerator() {
                   <span
                     aria-hidden
                     className={`text-xs tabular-nums ${
-                      topic.length > DEMO_TOPIC_MAX_LENGTH * 0.9 ? "text-primary" : "text-muted-foreground"
+                      topic.length > DEMO_TOPIC_MAX_LENGTH * 0.9
+                        ? "text-primary"
+                        : "text-muted-foreground"
                     }`}
                   >
                     {topic.length}/{DEMO_TOPIC_MAX_LENGTH}

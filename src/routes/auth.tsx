@@ -164,12 +164,10 @@ function AuthPage() {
 
           {isProIntent ? (
             <div className="mt-4 rounded-md border border-primary/40 bg-primary/10 px-3 py-2 text-center text-xs text-foreground">
-              Você está assinando o Pro — R$29,90/mês — 500 gerações por dia. O pagamento é o próximo
-              passo, depois do cadastro.
+              Você está assinando o Pro — R$29,90/mês — 500 gerações por dia. O pagamento é o
+              próximo passo, depois do cadastro.
             </div>
           ) : null}
-
-          
 
           {referralCode && mode === "signup" ? (
             <div className="mt-4 rounded-md border border-primary/40 bg-primary/10 px-3 py-2 text-center text-xs text-foreground">
