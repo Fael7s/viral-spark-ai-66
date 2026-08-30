@@ -36,7 +36,7 @@ function Landing() {
                 size="lg"
                 className="w-full gap-2 bg-primary text-primary-foreground hover:bg-primary/90 sm:w-auto"
               >
-                <Link to="/auth">
+                <Link to="/auth" search={{ mode: "signup" }}>
                   Criar minha conta <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
@@ -124,7 +124,9 @@ function Landing() {
                 ))}
               </ul>
               <Button asChild variant="secondary" className="mt-8 w-full">
-                <Link to="/auth">Criar conta grátis</Link>
+                <Link to="/auth" search={{ mode: "signup" }}>
+                  Criar conta grátis
+                </Link>
               </Button>
             </Card>
 
@@ -201,7 +203,7 @@ function Landing() {
           size="lg"
           className="mt-8 gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
         >
-          <Link to="/auth">
+          <Link to="/auth" search={{ mode: "signup" }}>
             Criar minha conta <ArrowRight className="h-4 w-4" />
           </Link>
         </Button>

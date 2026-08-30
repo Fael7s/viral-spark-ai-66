@@ -55,16 +55,35 @@ function AuthPage() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
+
+    // ?mode= e a unica forma de um CTA declarar em qual aba a tela abre.
+    // Qualquer valor fora da lista fechada e ignorado e cai no padrao de baixo,
+    // que continua sendo login quando a rota vem sem parametro nenhum.
+    const requested = params.get("mode");
+    const explicitMode = requested === "login" || requested === "signup" ? requested : null;
+
     const ref = params.get("ref");
+    let hasReferral = false;
     if (ref) {
       const clean = ref.trim().toUpperCase().slice(0, 16);
       if (/^[A-Z0-9]+$/.test(clean)) {
         setReferralCode(clean);
-        setMode("signup");
+        hasReferral = true;
       }
     }
-    if (params.get("intent") === "pro") {
+
+    const proIntent = params.get("intent") === "pro";
+    if (proIntent) {
       setIsProIntent(true);
+    }
+
+    // Precedencia: o modo pedido explicitamente vence. Sem ele, tanto um convite
+    // por indicacao quanto a intencao de assinar implicam alguem que ainda nao
+    // tem conta, e quem ja tem so precisa clicar no alternador.
+    if (explicitMode) {
+      setMode(explicitMode);
+    } else if (hasReferral || proIntent) {
+      setMode("signup");
     }
   }, []);
 
@@ -221,15 +240,24 @@ function AuthPage() {
             </Button>
           </form>
 
-          <p className="mt-5 text-center text-sm text-muted-foreground">
-            {mode === "login" ? "Não tem conta?" : "Já tem conta?"}{" "}
-            <button
-              className="font-semibold text-primary hover:underline"
+          {/*
+            O alternador era um link de rodape em texto pequeno, facil de nao ver
+            em quem caiu na aba errada. Vira um bloco proprio com botao de largura
+            total: continua sendo um alternador, nao um conjunto de abas.
+          */}
+          <div className="mt-6 rounded-md border border-border bg-muted/40 p-3 text-center">
+            <p className="text-sm text-muted-foreground">
+              {mode === "login" ? "Ainda não tem uma conta?" : "Já tem uma conta?"}
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              className="mt-2 w-full font-semibold"
               onClick={() => setMode(mode === "login" ? "signup" : "login")}
             >
-              {mode === "login" ? "Cadastre-se" : "Entrar"}
-            </button>
-          </p>
+              {mode === "login" ? "Criar conta grátis" : "Entrar na minha conta"}
+            </Button>
+          </div>
         </Card>
       </div>
     </div>

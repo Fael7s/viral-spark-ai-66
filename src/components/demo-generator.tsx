@@ -49,7 +49,9 @@ export function DemoGenerator() {
         asChild
         className="mt-3 w-full gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
       >
-        <Link to="/auth">Criar minha conta grátis</Link>
+        <Link to="/auth" search={{ mode: "signup" }}>
+          Criar minha conta grátis
+        </Link>
       </Button>
     </div>
   );
@@ -130,7 +132,9 @@ export function DemoGenerator() {
                 asChild
                 className="mt-3 w-full gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
               >
-                <Link to="/auth">Criar minha conta grátis</Link>
+                <Link to="/auth" search={{ mode: "signup" }}>
+                  Criar minha conta grátis
+                </Link>
               </Button>
             </div>
           ) : null}
