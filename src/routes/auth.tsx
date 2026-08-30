@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Check } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
@@ -17,12 +18,48 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
-const passwordSchema = z
-  .string()
-  .min(8, "A senha deve ter pelo menos 8 caracteres.")
-  .regex(/[A-Z]/, "A senha deve conter pelo menos 1 letra maiúscula.")
-  .regex(/[0-9]/, "A senha deve conter pelo menos 1 número.")
-  .regex(/[^A-Za-z0-9]/, "A senha deve conter pelo menos 1 caractere especial.");
+/**
+ * Fonte unica da politica de senha. O schema abaixo e a lista exibida no
+ * formulario consomem estas mesmas entradas, entao mudar um requisito e mudar
+ * uma linha, e nao duas que podem divergir em silencio.
+ *
+ * label vai para a lista na tela, message vai para a mensagem de validacao.
+ * Os requisitos e as mensagens sao exatamente os que ja vigoravam.
+ */
+const PASSWORD_RULES = [
+  {
+    label: "Pelo menos 8 caracteres",
+    message: "A senha deve ter pelo menos 8 caracteres.",
+    isMet: (value: string) => value.length >= 8,
+  },
+  {
+    label: "Pelo menos 1 letra maiúscula",
+    message: "A senha deve conter pelo menos 1 letra maiúscula.",
+    isMet: (value: string) => /[A-Z]/.test(value),
+  },
+  {
+    label: "Pelo menos 1 número",
+    message: "A senha deve conter pelo menos 1 número.",
+    isMet: (value: string) => /[0-9]/.test(value),
+  },
+  {
+    label: "Pelo menos 1 caractere especial",
+    message: "A senha deve conter pelo menos 1 caractere especial.",
+    isMet: (value: string) => /[^A-Za-z0-9]/.test(value),
+  },
+] as const;
+
+// superRefine, e nao refine encadeado: encadear produz ZodEffects aninhados,
+// onde a regra externa so roda se a interna passar, e voltariamos a ter uma
+// pendencia por vez. Aqui todas as regras sao avaliadas na mesma passagem,
+// preservando o comportamento que o schema encadeado ja tinha.
+const passwordSchema = z.string().superRefine((value, ctx) => {
+  for (const rule of PASSWORD_RULES) {
+    if (!rule.isMet(value)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: rule.message });
+    }
+  }
+});
 
 /**
  * The OAuth SDK returns distinct causes behind the same visible outcome
@@ -56,6 +93,10 @@ function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [referralCode, setReferralCode] = useState<string | null>(null);
   const [isProIntent, setIsProIntent] = useState(false);
+  // Mensagens que o schema reportou na ultima tentativa de cadastro. Serve para
+  // distinguir 'ainda nao preencheu' de 'tentou enviar e faltou', que mudam a
+  // cor da lista. A lista em si e sempre derivada de PASSWORD_RULES.
+  const [passwordIssues, setPasswordIssues] = useState<string[]>([]);
   const { session } = useAuth();
   const navigate = useNavigate();
 
@@ -98,14 +139,23 @@ function AuthPage() {
     if (session) navigate({ to: isProIntent ? "/upgrade" : "/app", replace: true });
   }, [session, navigate, isProIntent]);
 
+  // Erro so aparece depois de uma tentativa que falhou, e some quando nao resta
+  // regra pendente, mesmo antes de reenviar o formulario.
+  const hasPendingPasswordIssues =
+    passwordIssues.length > 0 && PASSWORD_RULES.some((rule) => !rule.isMet(password));
+
   const handleEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     if (mode === "signup") {
       const result = passwordSchema.safeParse(password);
       if (!result.success) {
-        toast.error(result.error.issues[0].message);
+        // Todas as pendencias, nao apenas issues[0]. E em elemento fixo na tela,
+        // nao em toast: isto e instrucao para reler enquanto digita, e o toast
+        // some sozinho enquanto a pessoa olha o teclado no celular.
+        setPasswordIssues(result.error.issues.map((issue) => issue.message));
         return;
       }
+      setPasswordIssues([]);
     }
     setLoading(true);
     try {
@@ -246,7 +296,61 @@ function AuthPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
+                aria-describedby={mode === "signup" ? "password-requisitos" : undefined}
               />
+              {/*
+                No cadastro os requisitos ficam na tela desde o inicio, todos de
+                uma vez e atualizando conforme a pessoa digita. Antes eles so
+                apareciam depois de falhar, um por vez, em toast que sumia
+                sozinho: eram ate quatro rodadas de fracasso num campo
+                obrigatorio. O estado de erro so pinta o que ainda falta, entao
+                ele se apaga sozinho a medida que a senha fica valida.
+              */}
+              {mode === "signup" ? (
+                <div
+                  id="password-requisitos"
+                  className="rounded-md border border-border bg-muted/30 p-3"
+                >
+                  <p
+                    className={`text-xs font-medium ${
+                      hasPendingPasswordIssues ? "text-destructive" : "text-muted-foreground"
+                    }`}
+                  >
+                    {hasPendingPasswordIssues
+                      ? "A senha ainda não atende:"
+                      : "A senha precisa ter:"}
+                  </p>
+                  <ul className="mt-2 space-y-1">
+                    {PASSWORD_RULES.map((rule) => {
+                      const met = rule.isMet(password);
+                      return (
+                        <li key={rule.label} className="flex items-center gap-2 text-xs">
+                          <Check
+                            aria-hidden
+                            className={`h-3.5 w-3.5 shrink-0 ${
+                              met ? "text-primary" : "text-muted-foreground/40"
+                            }`}
+                          />
+                          <span
+                            className={
+                              met
+                                ? "text-foreground"
+                                : hasPendingPasswordIssues
+                                  ? "text-destructive"
+                                  : "text-muted-foreground"
+                            }
+                          >
+                            {rule.label}
+                          </span>
+                          <span className="sr-only">
+                            {met ? "requisito atendido" : "requisito pendente"}
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              ) : null}
             </div>
             <Button
               type="submit"
