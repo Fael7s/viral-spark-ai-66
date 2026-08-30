@@ -64,6 +64,8 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
     }
 
     const supabase = context.supabase as unknown as {
+      // supabaseAdmin estreitado a superficie usada. O retorno de from() e a cadeia do PostgREST, cujo tipo exige os genericos completos de types.ts (gerado).
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       from: (t: string) => any;
     };
     const { data: existing } = await supabase
@@ -112,6 +114,8 @@ export const createBillingPortalSession = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const supabase = context.supabase as unknown as {
+      // supabaseAdmin estreitado a superficie usada. O retorno de from() e a cadeia do PostgREST, cujo tipo exige os genericos completos de types.ts (gerado).
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       from: (t: string) => any;
     };
 

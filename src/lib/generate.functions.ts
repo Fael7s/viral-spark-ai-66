@@ -201,6 +201,8 @@ export const generateContent = createServerFn({ method: "POST" })
     // (RLS is SELECT-only). consume_generation() already validated the caller
     // via auth.uid(), so the final insert is done with the service role here.
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    // supabaseAdmin estreitado a superficie usada. O retorno de from() e a cadeia do PostgREST, cujo tipo exige os genericos completos de types.ts (gerado).
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const admin = supabaseAdmin as unknown as { from: (t: string) => any };
 
     const { data: row, error: insertError } = await admin
