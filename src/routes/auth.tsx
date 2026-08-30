@@ -42,6 +42,13 @@ function oauthMessage(error: Error): string {
   return "Não foi possível entrar com o Google.";
 }
 
+/**
+ * Destino do retorno do OAuth para quem veio com intencao de assinar. Fica como
+ * constante no codigo de proposito: o path que entra na URL de redirect nunca
+ * pode vir de parametro controlado por quem acessa a pagina.
+ */
+const PRO_OAUTH_RETURN_PATH = "/upgrade";
+
 function AuthPage() {
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
@@ -150,8 +157,18 @@ function AuthPage() {
 
   const handleGoogle = async () => {
     setLoading(true);
+    // O SDK tem dois caminhos. Dentro de um iframe ele abre popup, nao
+    // redireciona, e a navegacao no fim desta funcao leva ao destino certo.
+    // Fora de um iframe, que e o caso do site publicado, ele troca a pagina
+    // inteira e retorna { redirected: true }: a funcao sai no return abaixo e a
+    // navegacao nunca roda, entao o unico registro do destino e o proprio
+    // redirect_uri. Com a origem pelada, quem clicou em assinar autenticava e
+    // voltava para a raiz do site, logado e sem nenhum rastro da intencao.
+    const redirectUri = isProIntent
+      ? new URL(PRO_OAUTH_RETURN_PATH, window.location.origin).toString()
+      : window.location.origin;
     const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
+      redirect_uri: redirectUri,
     });
     if (result.error) {
       const error = result.error instanceof Error ? result.error : new Error(String(result.error));
