@@ -97,6 +97,12 @@ function AuthPage() {
   // distinguir 'ainda nao preencheu' de 'tentou enviar e faltou', que mudam a
   // cor da lista. A lista em si e sempre derivada de PASSWORD_RULES.
   const [passwordIssues, setPasswordIssues] = useState<string[]>([]);
+  // Preenchido quando o signUp volta sem sessao, ou seja, a conta ficou
+  // aguardando confirmacao por e-mail. Guarda o endereco exato que recebeu a
+  // mensagem, para a tela poder dize-lo em vez de deixar a pessoa adivinhando.
+  const [pendingConfirmationEmail, setPendingConfirmationEmail] = useState<string | null>(null);
+  const [resending, setResending] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
   const { session } = useAuth();
   const navigate = useNavigate();
 
@@ -144,6 +150,42 @@ function AuthPage() {
   const hasPendingPasswordIssues =
     passwordIssues.length > 0 && PASSWORD_RULES.some((rule) => !rule.isMet(password));
 
+  // Contagem regressiva do reenvio. Junto com o estado 'resending' impede tanto
+  // o clique repetido durante a chamada quanto a rajada logo depois dela.
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const id = setTimeout(() => setResendCooldown((seconds) => seconds - 1), 1000);
+    return () => clearTimeout(id);
+  }, [resendCooldown]);
+
+  const handleResendConfirmation = async () => {
+    if (!pendingConfirmationEmail || resending || resendCooldown > 0) return;
+    setResending(true);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email: pendingConfirmationEmail,
+        options: { emailRedirectTo: window.location.origin },
+      });
+      if (error) throw error;
+      toast.success("Enviamos outro e-mail de confirmação.");
+      setResendCooldown(60);
+    } catch (err) {
+      // Endereco nunca vai para o log.
+      console.error("[auth] resend confirmation failed", err);
+      toast.error("Não foi possível reenviar agora. Tente em instantes.");
+    } finally {
+      setResending(false);
+    }
+  };
+
+  const backToLogin = () => {
+    setPendingConfirmationEmail(null);
+    setPassword("");
+    setPasswordIssues([]);
+    setMode("login");
+  };
+
   const handleEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     if (mode === "signup") {
@@ -180,7 +222,10 @@ function AuthPage() {
         if (error) throw error;
         // No session means the account is awaiting e-mail confirmation.
         if (!data.session) {
-          toast.success("Verifique seu e-mail para ativar sua conta.");
+          // Antes daqui saia so um toast, que sumia deixando o mesmo formulario
+          // na tela: a pessoa nao sabia se tinha funcionado, para qual endereco
+          // foi, nem como reenviar. Agora a tela troca por um painel que fica.
+          setPendingConfirmationEmail(email);
           return;
         }
         toast.success("Conta criada. Pode mandar o primeiro tema.");
@@ -239,66 +284,98 @@ function AuthPage() {
           <Logo className="text-xl" />
         </div>
         <Card className="border-border/70 bg-card/80 p-6">
-          <h1 className="text-center text-xl font-bold">
-            {mode === "login" ? "Entrar" : "Criar conta"}
-          </h1>
-          <p className="mt-1 text-center text-sm text-muted-foreground">
-            {mode === "login"
-              ? "Bom te ver de volta"
-              : "Cinco gerações por dia, sem cartão de crédito"}
-          </p>
-
-          {isProIntent ? (
-            <div className="mt-4 rounded-md border border-primary/40 bg-primary/10 px-3 py-2 text-center text-xs text-foreground">
-              Você está assinando o Pro — R$29,90/mês — 500 gerações por dia. O pagamento é o
-              próximo passo, depois do cadastro.
+          {pendingConfirmationEmail ? (
+            <div className="space-y-4 text-center">
+              <h1 className="text-xl font-bold">Confira seu e-mail</h1>
+              <p className="text-sm text-muted-foreground">
+                Sua conta foi criada. Enviamos um link de confirmação para{" "}
+                <strong className="break-all text-foreground">{pendingConfirmationEmail}</strong>.
+                Abra a mensagem e clique no link para ativar a conta.
+              </p>
+              <p className="rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
+                Não achou? Procure na caixa de spam ou em promoções. O remetente pode levar alguns
+                minutos para aparecer.
+              </p>
+              <Button
+                type="button"
+                variant="secondary"
+                className="w-full"
+                onClick={handleResendConfirmation}
+                disabled={resending || resendCooldown > 0}
+              >
+                {resending
+                  ? "Reenviando..."
+                  : resendCooldown > 0
+                    ? `Reenviar em ${resendCooldown}s`
+                    : "Reenviar e-mail de confirmação"}
+              </Button>
+              <Button type="button" variant="outline" className="w-full" onClick={backToLogin}>
+                Voltar para o login
+              </Button>
             </div>
-          ) : null}
+          ) : (
+            <>
+              <h1 className="text-center text-xl font-bold">
+                {mode === "login" ? "Entrar" : "Criar conta"}
+              </h1>
+              <p className="mt-1 text-center text-sm text-muted-foreground">
+                {mode === "login"
+                  ? "Bom te ver de volta"
+                  : "Cinco gerações por dia, sem cartão de crédito"}
+              </p>
 
-          {referralCode && mode === "signup" ? (
-            <div className="mt-4 rounded-md border border-primary/40 bg-primary/10 px-3 py-2 text-center text-xs text-foreground">
-              Você foi indicado com o código <strong>{referralCode}</strong>. Seu convidador ganha 5
-              gerações extras hoje.
-            </div>
-          ) : null}
+              {isProIntent ? (
+                <div className="mt-4 rounded-md border border-primary/40 bg-primary/10 px-3 py-2 text-center text-xs text-foreground">
+                  Você está assinando o Pro — R$29,90/mês — 500 gerações por dia. O pagamento é o
+                  próximo passo, depois do cadastro.
+                </div>
+              ) : null}
 
-          <Button
-            variant="secondary"
-            className="mt-6 w-full gap-2"
-            onClick={handleGoogle}
-            disabled={loading}
-          >
-            <GoogleIcon /> Continuar com Google
-          </Button>
+              {referralCode && mode === "signup" ? (
+                <div className="mt-4 rounded-md border border-primary/40 bg-primary/10 px-3 py-2 text-center text-xs text-foreground">
+                  Você foi indicado com o código <strong>{referralCode}</strong>. Seu convidador
+                  ganha 5 gerações extras hoje.
+                </div>
+              ) : null}
 
-          <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground">
-            <span className="h-px flex-1 bg-border" /> ou <span className="h-px flex-1 bg-border" />
-          </div>
+              <Button
+                variant="secondary"
+                className="mt-6 w-full gap-2"
+                onClick={handleGoogle}
+                disabled={loading}
+              >
+                <GoogleIcon /> Continuar com Google
+              </Button>
 
-          <form onSubmit={handleEmail} className="space-y-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="email">E-mail</Label>
-              <Input
-                id="email"
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="voce@exemplo.com"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="password">Senha</Label>
-              <Input
-                id="password"
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                aria-describedby={mode === "signup" ? "password-requisitos" : undefined}
-              />
-              {/*
+              <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground">
+                <span className="h-px flex-1 bg-border" /> ou{" "}
+                <span className="h-px flex-1 bg-border" />
+              </div>
+
+              <form onSubmit={handleEmail} className="space-y-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="email">E-mail</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="voce@exemplo.com"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="password">Senha</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    aria-describedby={mode === "signup" ? "password-requisitos" : undefined}
+                  />
+                  {/*
                 No cadastro os requisitos ficam na tela desde o inicio, todos de
                 uma vez e atualizando conforme a pessoa digita. Antes eles so
                 apareciam depois de falhar, um por vez, em toast que sumia
@@ -306,79 +383,81 @@ function AuthPage() {
                 obrigatorio. O estado de erro so pinta o que ainda falta, entao
                 ele se apaga sozinho a medida que a senha fica valida.
               */}
-              {mode === "signup" ? (
-                <div
-                  id="password-requisitos"
-                  className="rounded-md border border-border bg-muted/30 p-3"
-                >
-                  <p
-                    className={`text-xs font-medium ${
-                      hasPendingPasswordIssues ? "text-destructive" : "text-muted-foreground"
-                    }`}
-                  >
-                    {hasPendingPasswordIssues
-                      ? "A senha ainda não atende:"
-                      : "A senha precisa ter:"}
-                  </p>
-                  <ul className="mt-2 space-y-1">
-                    {PASSWORD_RULES.map((rule) => {
-                      const met = rule.isMet(password);
-                      return (
-                        <li key={rule.label} className="flex items-center gap-2 text-xs">
-                          <Check
-                            aria-hidden
-                            className={`h-3.5 w-3.5 shrink-0 ${
-                              met ? "text-primary" : "text-muted-foreground/40"
-                            }`}
-                          />
-                          <span
-                            className={
-                              met
-                                ? "text-foreground"
-                                : hasPendingPasswordIssues
-                                  ? "text-destructive"
-                                  : "text-muted-foreground"
-                            }
-                          >
-                            {rule.label}
-                          </span>
-                          <span className="sr-only">
-                            {met ? "requisito atendido" : "requisito pendente"}
-                          </span>
-                        </li>
-                      );
-                    })}
-                  </ul>
+                  {mode === "signup" ? (
+                    <div
+                      id="password-requisitos"
+                      className="rounded-md border border-border bg-muted/30 p-3"
+                    >
+                      <p
+                        className={`text-xs font-medium ${
+                          hasPendingPasswordIssues ? "text-destructive" : "text-muted-foreground"
+                        }`}
+                      >
+                        {hasPendingPasswordIssues
+                          ? "A senha ainda não atende:"
+                          : "A senha precisa ter:"}
+                      </p>
+                      <ul className="mt-2 space-y-1">
+                        {PASSWORD_RULES.map((rule) => {
+                          const met = rule.isMet(password);
+                          return (
+                            <li key={rule.label} className="flex items-center gap-2 text-xs">
+                              <Check
+                                aria-hidden
+                                className={`h-3.5 w-3.5 shrink-0 ${
+                                  met ? "text-primary" : "text-muted-foreground/40"
+                                }`}
+                              />
+                              <span
+                                className={
+                                  met
+                                    ? "text-foreground"
+                                    : hasPendingPasswordIssues
+                                      ? "text-destructive"
+                                      : "text-muted-foreground"
+                                }
+                              >
+                                {rule.label}
+                              </span>
+                              <span className="sr-only">
+                                {met ? "requisito atendido" : "requisito pendente"}
+                              </span>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                  ) : null}
                 </div>
-              ) : null}
-            </div>
-            <Button
-              type="submit"
-              className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
-              disabled={loading}
-            >
-              {loading ? "Aguarde..." : mode === "login" ? "Entrar" : "Criar conta"}
-            </Button>
-          </form>
+                <Button
+                  type="submit"
+                  className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+                  disabled={loading}
+                >
+                  {loading ? "Aguarde..." : mode === "login" ? "Entrar" : "Criar conta"}
+                </Button>
+              </form>
 
-          {/*
+              {/*
             O alternador era um link de rodape em texto pequeno, facil de nao ver
             em quem caiu na aba errada. Vira um bloco proprio com botao de largura
             total: continua sendo um alternador, nao um conjunto de abas.
           */}
-          <div className="mt-6 rounded-md border border-border bg-muted/40 p-3 text-center">
-            <p className="text-sm text-muted-foreground">
-              {mode === "login" ? "Ainda não tem uma conta?" : "Já tem uma conta?"}
-            </p>
-            <Button
-              type="button"
-              variant="outline"
-              className="mt-2 w-full font-semibold"
-              onClick={() => setMode(mode === "login" ? "signup" : "login")}
-            >
-              {mode === "login" ? "Criar conta grátis" : "Entrar na minha conta"}
-            </Button>
-          </div>
+              <div className="mt-6 rounded-md border border-border bg-muted/40 p-3 text-center">
+                <p className="text-sm text-muted-foreground">
+                  {mode === "login" ? "Ainda não tem uma conta?" : "Já tem uma conta?"}
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="mt-2 w-full font-semibold"
+                  onClick={() => setMode(mode === "login" ? "signup" : "login")}
+                >
+                  {mode === "login" ? "Criar conta grátis" : "Entrar na minha conta"}
+                </Button>
+              </div>
+            </>
+          )}
         </Card>
       </div>
     </div>
