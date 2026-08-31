@@ -10,6 +10,12 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+
+# bun.lock e a unica fonte de verdade de dependencias: o build do Lovable
+# instala com bun (ver bunfig.toml e .lovable/plan/). Um package-lock.json
+# versionado apenas diverge e quebra 'npm ci'.
+package-lock.json
+
 .output
 .vinxi
 .tanstack/**

@@ -6,6 +6,8 @@ const mockStripe = {
   subscriptions: { retrieve: vi.fn() },
 };
 vi.mock("@/lib/stripe.server", () => ({ getStripe: vi.fn(() => mockStripe) }));
+// test double: banco falso montado sob medida para o caso de teste
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const mockDb: any = {
   from: vi.fn(() => mockDb),
   select: vi.fn(() => mockDb),
@@ -43,6 +45,8 @@ describe("Webhook", () => {
         const sid = typeof s.subscription === "string" ? s.subscription : s.subscription?.id;
         const cid = typeof s.customer === "string" ? s.customer : s.customer?.id;
         if (!uid || !sid) break;
+        // fixture do Stripe: campos de assinatura ausentes no tipo publico
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const sub = (await stripe.subscriptions.retrieve(sid)) as any;
         await db.from("subscriptions").upsert(
           {
@@ -62,6 +66,8 @@ describe("Webhook", () => {
         break;
       }
       case "customer.subscription.updated": {
+        // fixture do Stripe: evento montado a mao para o caso de teste
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const sub = ev.data.object as any;
         await db
           .from("subscriptions")

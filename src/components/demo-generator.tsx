@@ -49,7 +49,9 @@ export function DemoGenerator() {
         asChild
         className="mt-3 w-full gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
       >
-        <Link to="/auth">Criar minha conta grátis</Link>
+        <Link to="/auth" search={{ mode: "signup" }}>
+          Criar minha conta grátis
+        </Link>
       </Button>
     </div>
   );
@@ -63,7 +65,15 @@ export function DemoGenerator() {
         </p>
 
         <Card className="mt-8 space-y-4 border-border/70 bg-card/80 p-6">
-          {!usedDemo ? (
+          {/*
+            O servidor concede DEMO_DAILY_LIMIT_PER_IP geracoes por IP por dia.
+            O formulario so sai da tela quando o servidor recusa com
+            DEMO_LIMIT_REACHED; uma geracao bem-sucedida nao encerra a sessao de
+            teste. Nao ha contador de tentativas restantes aqui de proposito: o
+            cliente nao sabe quantas o IP ja consumiu hoje, entao qualquer numero
+            exibido seria adivinhacao.
+          */}
+          {!limitReached ? (
             <>
               <div className="space-y-2">
                 <div className="flex items-baseline justify-between gap-2">
@@ -71,7 +81,9 @@ export function DemoGenerator() {
                   <span
                     aria-hidden
                     className={`text-xs tabular-nums ${
-                      topic.length > DEMO_TOPIC_MAX_LENGTH * 0.9 ? "text-primary" : "text-muted-foreground"
+                      topic.length > DEMO_TOPIC_MAX_LENGTH * 0.9
+                        ? "text-primary"
+                        : "text-muted-foreground"
                     }`}
                   >
                     {topic.length}/{DEMO_TOPIC_MAX_LENGTH}
@@ -91,17 +103,25 @@ export function DemoGenerator() {
                 onClick={() => mutation.mutate()}
               >
                 <Wand2 className="h-4 w-4" />
-                {mutation.isPending ? "Gerando..." : "Gerar meu exemplo"}
+                {mutation.isPending
+                  ? "Gerando..."
+                  : usedDemo
+                    ? "Gerar outro exemplo"
+                    : "Gerar meu exemplo"}
               </Button>
             </>
           ) : null}
 
           {mutation.isPending ? <ResultCardsSkeleton /> : null}
 
-          {!mutation.isPending && result && !limitReached ? (
+          {!mutation.isPending && result ? (
             <div className="space-y-4">
               <ResultCards result={result} />
-              {signupCta}
+              {/*
+                Com o limite atingido o painel abaixo ja traz o proprio CTA, entao
+                o signupCta sai para nao repetir a mesma chamada duas vezes.
+              */}
+              {!limitReached ? signupCta : null}
             </div>
           ) : null}
 
@@ -112,7 +132,9 @@ export function DemoGenerator() {
                 asChild
                 className="mt-3 w-full gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
               >
-                <Link to="/auth">Criar minha conta grátis</Link>
+                <Link to="/auth" search={{ mode: "signup" }}>
+                  Criar minha conta grátis
+                </Link>
               </Button>
             </div>
           ) : null}

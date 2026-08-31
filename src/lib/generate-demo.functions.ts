@@ -50,7 +50,11 @@ export const generateDemoContent = createServerFn({ method: "POST" })
     const parsed = demoInputSchema.safeParse(data);
     if (!parsed.success) {
       console.error("[generate-demo] input validation failed", {
-        issues: parsed.error.issues.map((i) => ({ path: i.path.join("."), code: i.code, message: i.message })),
+        issues: parsed.error.issues.map((i) => ({
+          path: i.path.join("."),
+          code: i.code,
+          message: i.message,
+        })),
       });
       throw parsed.error;
     }
@@ -63,7 +67,10 @@ export const generateDemoContent = createServerFn({ method: "POST" })
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const admin = supabaseAdmin as unknown as {
-      rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }>;
+      rpc: (
+        fn: string,
+        args: Record<string, unknown>,
+      ) => Promise<{ data: unknown; error: unknown }>;
     };
 
     const { data: consumed, error: consumeError } = await admin.rpc("consume_demo_generation", {

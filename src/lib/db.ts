@@ -5,6 +5,8 @@ import { FREE_DAILY_LIMIT, PRO_DAILY_LIMIT } from "./types";
 // The generated Database types are empty until tables are introspected; cast to a
 // permissive client so the app compiles while RLS enforces per-user access.
 const db = supabase as unknown as {
+  // supabase estreitado a superficie usada. O retorno de from() e a cadeia do PostgREST, cujo tipo exige os genericos completos de types.ts (gerado).
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   from: (t: string) => any;
 };
 

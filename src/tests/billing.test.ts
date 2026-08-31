@@ -10,6 +10,8 @@ const mockStripe = {
 function MockStripe() {
   return mockStripe;
 }
+// test double: injeta membro estatico ausente no mock do Stripe
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 (MockStripe as any).createFetchHttpClient = vi.fn(() => ({}));
 vi.mock("stripe", () => ({ default: MockStripe }));
 

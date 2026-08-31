@@ -15,6 +15,8 @@ describe("Banco de Dados", () => {
   const mockFrom = vi.fn();
   beforeEach(() => {
     vi.resetAllMocks();
+    // test double: substitui from() por mock no cliente real
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (supabase as any).from = mockFrom;
   });
 

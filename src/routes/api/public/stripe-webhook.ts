@@ -13,6 +13,8 @@ function periodEndISO(sub: Stripe.Subscription): string | null {
 // Returns true only when this Stripe event is newer than the last one we
 // processed for the subscription, protecting against out-of-order delivery.
 async function isNewerEvent(
+  // handler recebe so a superficie from(). O retorno e a cadeia do PostgREST, cujo tipo exige os genericos completos de types.ts (gerado).
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   db: { from: (t: string) => any },
   subscriptionId: string,
   eventCreatedUnix: number,
@@ -79,6 +81,8 @@ export const Route = createFileRoute("/api/public/stripe-webhook")({
         }
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        // supabaseAdmin estreitado a superficie usada. O retorno de from() e a cadeia do PostgREST, cujo tipo exige os genericos completos de types.ts (gerado).
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const db = supabaseAdmin as unknown as { from: (t: string) => any };
 
         // Idempotency: ignore events we've already processed.
