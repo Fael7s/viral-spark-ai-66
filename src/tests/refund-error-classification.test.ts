@@ -56,6 +56,34 @@ describe("Deteccao de migration pendente no estorno", () => {
     expect(isMissingFunctionError({ message: "Not authenticated" })).toBe(false);
   });
 
+  it("nao confunde tabela ausente com funcao ausente", () => {
+    // 42P01. "does not exist" tambem aparece aqui, mas o objeto que falta e uma
+    // tabela: falha de schema real, nao lacuna de deploy do estorno. Precisa ir
+    // para console.error, senao some no meio dos warns.
+    expect(
+      isMissingFunctionError({
+        code: "42P01",
+        message: 'relation "public.usage_limits" does not exist',
+      }),
+    ).toBe(false);
+    expect(
+      isMissingFunctionError({ message: 'relation "public.usage_limits" does not exist' }),
+    ).toBe(false);
+    expect(
+      isMissingFunctionError(new Error('relation "public.demo_generation_limits" does not exist')),
+    ).toBe(false);
+  });
+
+  it("nao confunde coluna ausente com funcao ausente", () => {
+    // 42703. Mesmo raciocinio: e uma migration de coluna faltando, e o log
+    // precisa gritar.
+    expect(
+      isMissingFunctionError({ code: "42703", message: 'column "daily_count" does not exist' }),
+    ).toBe(false);
+    expect(isMissingFunctionError({ message: 'column "daily_count" does not exist' })).toBe(false);
+    expect(isMissingFunctionError("column X does not exist")).toBe(false);
+  });
+
   it("nao quebra com entrada degenerada", () => {
     // O erro chega como unknown; a funcao nao pode lancar ao inspeciona-lo,
     // senao o proprio tratamento de erro vira uma falha.
