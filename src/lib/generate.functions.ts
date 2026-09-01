@@ -5,16 +5,34 @@ import { buildMessages, callAiGateway } from "./generate.server";
 import { FREE_DAILY_LIMIT, PRO_DAILY_LIMIT, isProOnlyTone, assertTonePermitted } from "./types";
 
 /**
+ * Postgres reports a missing function (SQLSTATE 42883) with a message that
+ * starts with the object kind: "function public.refund_generation() does not
+ * exist". Anchoring on that first word is what separates it from 42P01
+ * ("relation ... does not exist") and 42703 ("column ... does not exist"),
+ * which are real schema failures and must stay at console.error.
+ *
+ * Deliberately strict: a message shape we fail to recognise falls through to
+ * console.error, which is the safe direction. The previous substring test
+ * matched "does not exist" anywhere, so a missing table was reported as a
+ * pending migration and demoted to console.warn.
+ */
+const MISSING_FUNCTION_MESSAGE = /^\s*function\b.*\bdoes not exist\b/i;
+
+/**
  * True when the refund failed only because refund_generation is not in the
  * database yet. PostgREST answers PGRST202 ("Could not find the function
  * public.refund_generation in the schema cache"); a direct Postgres error
  * would be 42883.
+ *
+ * The error codes are the primary signal and are checked first; the message is
+ * only consulted when no code came through.
  */
 export function isMissingFunctionError(err: unknown): boolean {
   const e = err as { code?: unknown; message?: unknown };
   if (e?.code === "PGRST202" || e?.code === "42883") return true;
   const message = typeof e?.message === "string" ? e.message : String(err ?? "");
-  return message.includes("Could not find the function") || message.includes("does not exist");
+  if (message.includes("Could not find the function")) return true;
+  return MISSING_FUNCTION_MESSAGE.test(message);
 }
 
 /**
