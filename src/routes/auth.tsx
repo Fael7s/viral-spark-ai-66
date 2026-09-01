@@ -80,6 +80,34 @@ function oauthMessage(error: Error): string {
 }
 
 /**
+ * Recusas que vem do servidor e sao sobre a senha em si, nao sobre os requisitos
+ * locais. Vao para o mesmo bloco fixo abaixo do campo, porque a pessoa precisa
+ * relê-las enquanto digita a senha nova.
+ *
+ * A chave e o campo `code` da resposta do Supabase, nunca o texto da mensagem:
+ * a mensagem e localizada pelo servidor e muda.
+ */
+const SERVER_PASSWORD_ERRORS: Record<string, string> = {
+  weak_password:
+    "Esta senha aparece em vazamentos públicos conhecidos, por isso o servidor não aceita. Escolha uma senha diferente.",
+};
+
+/**
+ * Le o `code` do erro devolvido pelo client do Supabase.
+ *
+ * AuthError, em @supabase/auth-js, faz `this.code = code` no construtor, entao o
+ * campo chega direto no objeto que o catch captura. Verificado na versao
+ * instalada: new AuthApiError(msg, 422, "weak_password").code === "weak_password".
+ * A resposta 422 chega como erro do client, nao como excecao de rede, entao um
+ * catch que so olhasse error.message continuaria caindo no texto generico.
+ */
+function authErrorCode(error: unknown): string | undefined {
+  if (typeof error !== "object" || error === null) return undefined;
+  const code = (error as { code?: unknown }).code;
+  return typeof code === "string" ? code : undefined;
+}
+
+/**
  * Destino do retorno do OAuth para quem veio com intencao de assinar. Fica como
  * constante no codigo de proposito: o path que entra na URL de redirect nunca
  * pode vir de parametro controlado por quem acessa a pagina.
@@ -97,6 +125,10 @@ function AuthPage() {
   // distinguir 'ainda nao preencheu' de 'tentou enviar e faltou', que mudam a
   // cor da lista. A lista em si e sempre derivada de PASSWORD_RULES.
   const [passwordIssues, setPasswordIssues] = useState<string[]>([]);
+  // Recusa da senha vinda do servidor. Separada de passwordIssues porque aqui a
+  // senha passa nos quatro requisitos: a lista fica toda verde e mesmo assim o
+  // cadastro falha, que era exatamente o loop sem saida.
+  const [serverPasswordError, setServerPasswordError] = useState<string | null>(null);
   // Preenchido quando o signUp volta sem sessao, ou seja, a conta ficou
   // aguardando confirmacao por e-mail. Guarda o endereco exato que recebeu a
   // mensagem, para a tela poder dize-lo em vez de deixar a pessoa adivinhando.
@@ -188,6 +220,8 @@ function AuthPage() {
 
   const handleEmail = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Tentativa nova: a recusa do servidor da tentativa anterior deixa de valer.
+    setServerPasswordError(null);
     if (mode === "signup") {
       const result = passwordSchema.safeParse(password);
       if (!result.success) {
@@ -237,11 +271,41 @@ function AuthPage() {
     } catch (err) {
       // Mode and error object only. Never log the e-mail or the password.
       console.error("[auth] password flow failed", { mode, error: err });
+      const code = authErrorCode(err);
       const msg = err instanceof Error ? err.message : "";
-      if (msg.includes("Invalid login") || msg.includes("Email not confirmed")) {
+
+      // Recusa da senha pelo servidor: vai para o bloco fixo abaixo do campo, e
+      // nao para toast. Sem isto, quem enviava uma senha vazada via so 'Erro ao
+      // autenticar', olhava os quatro requisitos verdes, reenviava o mesmo
+      // formulario e recebia o mesmo erro. Discriminado apenas por code: o texto
+      // da mensagem e localizado pelo servidor.
+      const serverPasswordMessage = code ? SERVER_PASSWORD_ERRORS[code] : undefined;
+      if (serverPasswordMessage) {
+        setServerPasswordError(serverPasswordMessage);
+        return;
+      }
+
+      // Os codigos abaixo caiam todos no mesmo texto generico. O casamento por
+      // substring fica como reserva apenas quando a resposta nao traz code, o
+      // que a propria documentacao do auth-js admite acontecer.
+      const isInvalidCredentials =
+        code === "invalid_credentials" ||
+        code === "email_not_confirmed" ||
+        code === "user_not_found" ||
+        (!code && (msg.includes("Invalid login") || msg.includes("Email not confirmed")));
+      const isEmailTaken =
+        code === "user_already_exists" ||
+        code === "email_exists" ||
+        (!code && msg.includes("already registered"));
+
+      if (isInvalidCredentials) {
         toast.error("E-mail ou senha incorretos.");
-      } else if (msg.includes("already registered")) {
-        toast.error("Este e-mail já está cadastrado.");
+      } else if (isEmailTaken) {
+        toast.error("Este e-mail já está cadastrado. Entre em vez de criar conta.");
+      } else if (code === "over_request_rate_limit") {
+        toast.error("Muitas tentativas seguidas. Espere um instante e tente de novo.");
+      } else if (code === "email_address_invalid") {
+        toast.error("Esse e-mail não foi aceito. Confira se está escrito corretamente.");
       } else {
         toast.error("Erro ao autenticar. Tente novamente.");
       }
@@ -318,10 +382,20 @@ function AuthPage() {
               <h1 className="text-center text-xl font-bold">
                 {mode === "login" ? "Entrar" : "Criar conta"}
               </h1>
+              {/*
+                Com intencao de assinar, o subtitulo do plano gratis contradizia
+                o banner logo abaixo, que anuncia o Pro pago: as duas mensagens
+                ficavam lado a lado na tela de maior intencao de compra. Aqui o
+                subtitulo so afirma que a conta e etapa da assinatura, que e o
+                que o proprio banner ja diz; valor e numero de geracoes seguem
+                exclusivamente no banner, sem repeticao.
+              */}
               <p className="mt-1 text-center text-sm text-muted-foreground">
                 {mode === "login"
                   ? "Bom te ver de volta"
-                  : "Cinco gerações por dia, sem cartão de crédito"}
+                  : isProIntent
+                    ? "Criar a conta é o primeiro passo da assinatura"
+                    : "Cinco gerações por dia, sem cartão de crédito"}
               </p>
 
               {isProIntent ? (
@@ -371,7 +445,11 @@ function AuthPage() {
                     type="password"
                     required
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      // A recusa era sobre a senha anterior; digitar outra a invalida.
+                      if (serverPasswordError) setServerPasswordError(null);
+                    }}
                     placeholder="••••••••"
                     aria-describedby={mode === "signup" ? "password-requisitos" : undefined}
                   />
@@ -388,6 +466,26 @@ function AuthPage() {
                       id="password-requisitos"
                       className="rounded-md border border-border bg-muted/30 p-3"
                     >
+                      {/*
+                        A recusa do servidor vem antes da lista e diz, explicito,
+                        que a lista nao e o problema. Sem essa linha a pessoa ve
+                        quatro itens verdes, conclui que a senha esta certa e
+                        reenvia o mesmo formulario indefinidamente.
+                      */}
+                      {serverPasswordError ? (
+                        <div
+                          role="alert"
+                          className="mb-3 rounded-md border border-destructive/40 bg-destructive/10 p-2"
+                        >
+                          <p className="text-xs font-medium text-destructive">
+                            {serverPasswordError}
+                          </p>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            A senha atende aos requisitos abaixo. A recusa veio por outro motivo,
+                            então não há nada a corrigir nessa lista.
+                          </p>
+                        </div>
+                      ) : null}
                       <p
                         className={`text-xs font-medium ${
                           hasPendingPasswordIssues ? "text-destructive" : "text-muted-foreground"
