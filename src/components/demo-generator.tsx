@@ -42,6 +42,26 @@ export function DemoGenerator() {
     },
   });
 
+  // O aviso de limite ocupa exatamente o lugar do formulario. Antes ele so
+  // existia no rodape do card, abaixo dos blocos de emojis e hashtags: na altura
+  // de rolagem onde a pessoa acabava de clicar, o formulario sumia e nada
+  // ocupava o espaco, entao a quarta tentativa parecia um clique que nao fez
+  // nada. Medicao do verificador: cerca de 930 pixels entre o centro do botao e
+  // a borda do painel, em viewport de 1512 por 795.
+  const limitNotice = (
+    <div className="rounded-md border border-primary/40 bg-primary/10 px-4 py-3 text-center text-sm text-foreground">
+      Limite de demonstração atingido. Crie sua conta grátis para continuar.
+      <Button
+        asChild
+        className="mt-3 w-full gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
+      >
+        <Link to="/auth" search={{ mode: "signup" }}>
+          Criar minha conta grátis
+        </Link>
+      </Button>
+    </div>
+  );
+
   const signupCta = (
     <div className="rounded-md border border-primary/40 bg-primary/10 px-4 py-3 text-center text-sm text-foreground">
       Gostou? Crie sua conta grátis e gere 5 por dia.
@@ -110,7 +130,9 @@ export function DemoGenerator() {
                     : "Gerar meu exemplo"}
               </Button>
             </>
-          ) : null}
+          ) : (
+            limitNotice
+          )}
 
           {mutation.isPending ? <ResultCardsSkeleton /> : null}
 
@@ -118,24 +140,13 @@ export function DemoGenerator() {
             <div className="space-y-4">
               <ResultCards result={result} />
               {/*
-                Com o limite atingido o painel abaixo ja traz o proprio CTA, entao
-                o signupCta sai para nao repetir a mesma chamada duas vezes.
+                Com o limite atingido, o limitNotice que ocupa o lugar do
+                formulario ja traz o proprio CTA, entao o signupCta sai daqui:
+                sao a mesma chamada, e empilhar dois botoes iguais na mesma tela
+                nao ajuda ninguem. Sobra exatamente um CTA, e ele fica na altura
+                de rolagem onde a pessoa clicou.
               */}
               {!limitReached ? signupCta : null}
-            </div>
-          ) : null}
-
-          {limitReached ? (
-            <div className="rounded-md border border-primary/40 bg-primary/10 px-4 py-3 text-center text-sm text-foreground">
-              Limite de demonstração atingido. Crie sua conta grátis para continuar.
-              <Button
-                asChild
-                className="mt-3 w-full gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
-              >
-                <Link to="/auth" search={{ mode: "signup" }}>
-                  Criar minha conta grátis
-                </Link>
-              </Button>
             </div>
           ) : null}
         </Card>
