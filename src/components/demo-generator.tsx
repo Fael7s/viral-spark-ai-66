@@ -113,9 +113,22 @@ export function DemoGenerator() {
                   id="demo-topic"
                   value={topic}
                   maxLength={DEMO_TOPIC_MAX_LENGTH}
+                  aria-describedby="demo-topic-hint"
                   onChange={(e) => setTopic(e.target.value)}
                   placeholder="Ex: Loja avisando que chegou coleção nova"
                 />
+                {/*
+                  Mesmo padrao ja usado dentro do app. Na landing o botao ficava
+                  esmaecido sem dizer por que, justamente para o visitante que
+                  ainda nao confia no produto. O numero sai de TOPIC_MIN_LENGTH,
+                  a mesma constante que controla o disabled do botao abaixo,
+                  entao os dois nunca podem divergir.
+                */}
+                {topic.trim().length < TOPIC_MIN_LENGTH ? (
+                  <p id="demo-topic-hint" className="text-xs text-muted-foreground">
+                    Escreve pelo menos {TOPIC_MIN_LENGTH} caracteres para liberar o botão.
+                  </p>
+                ) : null}
               </div>
               <Button
                 className="w-full gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
