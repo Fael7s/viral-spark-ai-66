@@ -382,10 +382,20 @@ function AuthPage() {
               <h1 className="text-center text-xl font-bold">
                 {mode === "login" ? "Entrar" : "Criar conta"}
               </h1>
+              {/*
+                Com intencao de assinar, o subtitulo do plano gratis contradizia
+                o banner logo abaixo, que anuncia o Pro pago: as duas mensagens
+                ficavam lado a lado na tela de maior intencao de compra. Aqui o
+                subtitulo so afirma que a conta e etapa da assinatura, que e o
+                que o proprio banner ja diz; valor e numero de geracoes seguem
+                exclusivamente no banner, sem repeticao.
+              */}
               <p className="mt-1 text-center text-sm text-muted-foreground">
                 {mode === "login"
                   ? "Bom te ver de volta"
-                  : "Cinco gerações por dia, sem cartão de crédito"}
+                  : isProIntent
+                    ? "Criar a conta é o primeiro passo da assinatura"
+                    : "Cinco gerações por dia, sem cartão de crédito"}
               </p>
 
               {isProIntent ? (
